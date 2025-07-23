@@ -1,4 +1,4 @@
-package com.example.hiddencountry.entity.review.domain.type;
+package com.example.hiddencountry.review.domain.type;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

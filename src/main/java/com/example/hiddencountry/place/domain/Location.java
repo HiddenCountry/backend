@@ -1,4 +1,4 @@
-package com.example.hiddencountry.entity.place.domain;
+package com.example.hiddencountry.place.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;

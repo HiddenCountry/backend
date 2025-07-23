@@ -1,4 +1,4 @@
-package com.example.hiddencountry.entity.place.domain.type;
+package com.example.hiddencountry.place.domain.type;
 
 /**
  * 주요 카테고리를 나타내는 열거형입니다.

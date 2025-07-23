@@ -1,6 +1,6 @@
-package com.example.hiddencountry.entity.place.domain;
+package com.example.hiddencountry.place.domain;
 
-import com.example.hiddencountry.entity.user.User;
+import com.example.hiddencountry.user.domain.User;
 
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
