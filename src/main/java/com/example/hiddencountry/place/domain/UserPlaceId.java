@@ -1,4 +1,4 @@
-package com.example.hiddencountry.entity.place.domain;
+package com.example.hiddencountry.place.domain;
 
 import java.io.Serializable;
 import java.util.Objects;

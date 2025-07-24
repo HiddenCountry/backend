@@ -1,10 +1,9 @@
-package com.example.hiddencountry.entity.review.domain;
+package com.example.hiddencountry.review.domain;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import com.example.hiddencountry.entity.user.User;
-import com.example.hiddencountry.entity.place.domain.Place;
+import com.example.hiddencountry.place.domain.Place;
+import com.example.hiddencountry.user.domain.User;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;

@@ -1,13 +1,12 @@
-package com.example.hiddencountry.entity.place.domain;
+package com.example.hiddencountry.place.domain;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import com.example.hiddencountry.entity.place.domain.type.Cat1;
-import com.example.hiddencountry.entity.place.domain.type.ContentType;
-import com.example.hiddencountry.entity.place.domain.type.CountryRegion;
-import com.example.hiddencountry.entity.place.domain.type.Season;
+import com.example.hiddencountry.place.domain.type.Cat1;
+import com.example.hiddencountry.place.domain.type.ContentType;
+import com.example.hiddencountry.place.domain.type.CountryRegion;
+import com.example.hiddencountry.place.domain.type.Season;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;

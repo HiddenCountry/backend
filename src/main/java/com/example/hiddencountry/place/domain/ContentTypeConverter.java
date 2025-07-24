@@ -1,6 +1,6 @@
-package com.example.hiddencountry.entity.place.domain;
+package com.example.hiddencountry.place.domain;
 
-import com.example.hiddencountry.entity.place.domain.type.ContentType;
+import com.example.hiddencountry.place.domain.type.ContentType;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;

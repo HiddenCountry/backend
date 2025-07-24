@@ -1,4 +1,4 @@
-package com.example.hiddencountry.entity.place.domain.type;
+package com.example.hiddencountry.place.domain.type;
 
 public enum CountryRegion {
 

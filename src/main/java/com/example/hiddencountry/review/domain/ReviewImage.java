@@ -1,11 +1,7 @@
-package com.example.hiddencountry.entity.place.domain;
-
-import com.example.hiddencountry.entity.place.domain.type.CountryRegion;
+package com.example.hiddencountry.review.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -22,24 +18,26 @@ import lombok.NoArgsConstructor;
 @Getter
 @Builder
 @Entity
-@Table(name = "place_country")
+@Table(name = "review_image")
 @AllArgsConstructor
 @NoArgsConstructor
-public class PlaceCountry {
+public class ReviewImage {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id", nullable = false)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "place_id", referencedColumnName = "id", nullable = false)
-	@NotNull
-	private Place place;
+	@Column(length = 500)
+	private String url;
 
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "review_id", referencedColumnName = "id", nullable = false)
 	@NotNull
-	@Enumerated(EnumType.STRING)
-	@Column(name = "country_region", nullable = false, length = 20)
-	private CountryRegion countryRegion;
+	private Review review;
+
+	public ReviewImage(String url) {
+		this.url = url;
+	}
 
 }

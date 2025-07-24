@@ -1,4 +1,4 @@
-package com.example.hiddencountry.entity.review.domain.type;
+package com.example.hiddencountry.review.domain.type;
 
 /**
  * 태그의 분류를 나타내는 enum입니다.

@@ -1,6 +1,6 @@
-package com.example.hiddencountry.entity.review.domain;
+package com.example.hiddencountry.place.domain;
 
-import com.example.hiddencountry.entity.review.domain.type.Tag;
+import com.example.hiddencountry.place.domain.type.CountryRegion;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -22,28 +22,24 @@ import lombok.NoArgsConstructor;
 @Getter
 @Builder
 @Entity
-@Table(name = "review_tag")
+@Table(name = "place_country")
 @AllArgsConstructor
 @NoArgsConstructor
-public class ReviewTag {
+public class PlaceCountry {
 
 	@Id
-	@Column(name = "id", nullable = false)
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id", nullable = false)
 	private Long id;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "place_id", referencedColumnName = "id", nullable = false)
+	@NotNull
+	private Place place;
 
 	@NotNull
 	@Enumerated(EnumType.STRING)
-	@Column(name = "tag_name", nullable = false, length = 10)
-	private Tag tag;
-
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "review_id", referencedColumnName = "id", nullable = false)
-	@NotNull
-	private Review review;
-
-	public ReviewTag(Tag tag) {
-		this.tag = tag;
-	}
+	@Column(name = "country_region", nullable = false, length = 20)
+	private CountryRegion countryRegion;
 
 }
