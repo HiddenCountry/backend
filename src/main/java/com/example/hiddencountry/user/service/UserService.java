@@ -2,6 +2,7 @@ package com.example.hiddencountry.user.service;
 
 import com.example.hiddencountry.global.jwt.JwtTokenProvider;
 import com.example.hiddencountry.global.status.ErrorStatus;
+import com.example.hiddencountry.user.converter.UserConverter;
 import com.example.hiddencountry.user.domain.User;
 import com.example.hiddencountry.user.model.response.AuthorizationToken;
 import com.example.hiddencountry.user.model.response.KakaoTokenResponseDto;
@@ -89,15 +90,7 @@ public class UserService {
         User user = userRepository.findByKakaoId(kakaoId)
                 .orElseGet(() -> {
                     // 없으면 회원가입
-                    KakaoUserInfoResponseDto.KakaoAccount account = userInfo.getKakaoAccount();
-                    KakaoUserInfoResponseDto.KakaoAccount.Profile profile = account.getProfile();
-
-                    User newUser = User.builder()
-                            .kakaoId(kakaoId)
-                            .nickname("hiddencountry-new-kakao-user")
-                            .profileImage(profile.getProfileImageUrl())
-                            .build();
-
+                    User newUser = UserConverter.userOf(userInfo);
                     return userRepository.save(newUser);
                 });
 
