@@ -10,7 +10,6 @@ import com.example.hiddencountry.user.model.response.KakaoTokenResponseDto;
 import com.example.hiddencountry.user.model.response.KakaoUserInfoResponseDto;
 import com.example.hiddencountry.user.repository.UserRepository;
 import io.netty.handler.codec.http.HttpHeaderValues;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -99,7 +98,13 @@ public class UserService {
         return jwtTokenProvider.createTokenInfo(user);
     }
 
+    @Transactional
     public String updateNickname(User user, UpdateNicknameRequest updateNicknameRequest) {
-        return user.updateNickname(updateNicknameRequest.nickname());
+        String newNickname = updateNicknameRequest.nickname();
+
+        if (userRepository.existsByNickname(newNickname)) {
+            throw ErrorStatus.DUPLICATE_NICKNAME.serviceException();
+        }
+        return user.updateNickname(newNickname);
     }
 }
