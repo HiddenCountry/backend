@@ -1,6 +1,7 @@
 package com.example.hiddencountry.user.domain;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -27,4 +28,8 @@ public class User {
     @Column(name = "profile_image", length = 200)
     private String profileImage;
 
+    public String updateNickname(String nickname) {
+        this.nickname = nickname;
+        return this.nickname;
+    }
 }

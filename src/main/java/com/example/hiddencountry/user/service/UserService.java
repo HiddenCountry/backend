@@ -4,11 +4,13 @@ import com.example.hiddencountry.global.jwt.JwtTokenProvider;
 import com.example.hiddencountry.global.status.ErrorStatus;
 import com.example.hiddencountry.user.converter.UserConverter;
 import com.example.hiddencountry.user.domain.User;
+import com.example.hiddencountry.user.model.request.UpdateNicknameRequest;
 import com.example.hiddencountry.user.model.response.AuthorizationToken;
 import com.example.hiddencountry.user.model.response.KakaoTokenResponseDto;
 import com.example.hiddencountry.user.model.response.KakaoUserInfoResponseDto;
 import com.example.hiddencountry.user.repository.UserRepository;
 import io.netty.handler.codec.http.HttpHeaderValues;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -95,5 +97,9 @@ public class UserService {
                 });
 
         return jwtTokenProvider.createTokenInfo(user);
+    }
+
+    public String updateNickname(User user, UpdateNicknameRequest updateNicknameRequest) {
+        return user.updateNickname(updateNicknameRequest.nickname());
     }
 }
