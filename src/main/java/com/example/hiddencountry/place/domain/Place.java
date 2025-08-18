@@ -79,39 +79,23 @@ public class Place {
 	@OneToMany(mappedBy = "place", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<PlaceCountry> placeCountries = new ArrayList<>();
 
+	public void changeSeason(Season newSeason) {
+		if (newSeason == null) {
+			throw new IllegalArgumentException("추천 계절은 null일 수 없습니다.");
+		}
+		this.rSeason = newSeason;
+	}
+
 	public void addPlaceCountries(CountryRegion... regions) {
 		if (this.placeCountries == null) {
 			this.placeCountries = new ArrayList<>();
 		}
 
 		for (CountryRegion region : regions) {
-			this.placeCountries.add(new PlaceCountry(null, this, region));
+			PlaceCountryId id = new PlaceCountryId(this.id, region);
+			PlaceCountry placeCountry = new PlaceCountry(id, this);
+			this.placeCountries.add(placeCountry);
 		}
 	}
 
 }
-
-
-/** place 초반 저장시, 하단 코드 실행시 하나 저장됨 - 리뷰 부터 구현 하게되면, 다음 코드를 한번만 실해해서 데이터를 넣어주세요!  */
-// 		Place place = Place.builder()
-// 			.addr1("주소1")
-// 			.addr2("주소2")
-// 			.cat1(Cat1.A02)
-// 			.contentId(100L)
-// 			.contentType(ContentType._12)
-// 			.firstImage("image1")
-// 			.firstImage2("image2")
-// 			.cpyrhtDivCd("123")
-// 			.location(Location.builder()
-// 				.mapx(100.123131231313131)
-// 				.mapy(100.1231231313232)
-// 				.build())
-// 			.title("t1")
-// 			.rSeason(Season.AUTUMN)
-// 			.build();
-//
-// 		place.addPlaceCountries(
-// 			CountryRegion.ASIA, CountryRegion.EUROPE, CountryRegion.JAPAN
-// 		);
-//
-// 		Place saved = placeRepository.save(place);
