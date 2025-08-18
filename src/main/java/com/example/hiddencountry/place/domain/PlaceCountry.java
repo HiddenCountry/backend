@@ -12,12 +12,14 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import jakarta.persistence.EmbeddedId;
 
 @Getter
 @Builder
@@ -27,19 +29,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class PlaceCountry {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "id", nullable = false)
-	private Long id;
+	@EmbeddedId
+	private PlaceCountryId id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "place_id", referencedColumnName = "id", nullable = false)
-	@NotNull
+	@MapsId("placeId") // 복합키 중 하나인 placeId에 매핑
+	@JoinColumn(name = "place_id", nullable = false)
 	private Place place;
-
-	@NotNull
-	@Enumerated(EnumType.STRING)
-	@Column(name = "country_region", nullable = false, length = 20)
-	private CountryRegion countryRegion;
 
 }
