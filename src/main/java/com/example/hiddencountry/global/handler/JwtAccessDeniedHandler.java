@@ -22,8 +22,16 @@ public class JwtAccessDeniedHandler implements AuthenticationEntryPoint {
 		// JSON 직렬화
 		ObjectMapper objectMapper = new ObjectMapper();
 
-		res.getWriter().write(objectMapper.writeValueAsString(ApiResponse.onFailure(
-			ErrorStatus.NOT_AUTHORIZED
-		)));
+		Exception exception = (Exception) req.getAttribute("exception");
+
+		if (exception != null) {
+			res.getWriter().write(objectMapper.writeValueAsString(
+					ApiResponse.onFailure(ErrorStatus.NOT_AUTHORIZED, exception.getMessage())
+			));
+		} else {
+			res.getWriter().write(objectMapper.writeValueAsString(
+					ApiResponse.onFailure(ErrorStatus.NOT_AUTHORIZED)
+			));
+		}
 	}
 }

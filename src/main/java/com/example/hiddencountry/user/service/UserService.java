@@ -2,7 +2,9 @@ package com.example.hiddencountry.user.service;
 
 import com.example.hiddencountry.global.jwt.JwtTokenProvider;
 import com.example.hiddencountry.global.status.ErrorStatus;
+import com.example.hiddencountry.user.converter.UserConverter;
 import com.example.hiddencountry.user.domain.User;
+import com.example.hiddencountry.user.model.request.UpdateNicknameRequest;
 import com.example.hiddencountry.user.model.response.AuthorizationToken;
 import com.example.hiddencountry.user.model.response.KakaoTokenResponseDto;
 import com.example.hiddencountry.user.model.response.KakaoUserInfoResponseDto;
@@ -89,18 +91,20 @@ public class UserService {
         User user = userRepository.findByKakaoId(kakaoId)
                 .orElseGet(() -> {
                     // 없으면 회원가입
-                    KakaoUserInfoResponseDto.KakaoAccount account = userInfo.getKakaoAccount();
-                    KakaoUserInfoResponseDto.KakaoAccount.Profile profile = account.getProfile();
-
-                    User newUser = User.builder()
-                            .kakaoId(kakaoId)
-                            .nickname("hiddencountry-new-kakao-user")
-                            .profileImage(profile.getProfileImageUrl())
-                            .build();
-
+                    User newUser = UserConverter.userOf(userInfo);
                     return userRepository.save(newUser);
                 });
 
         return jwtTokenProvider.createTokenInfo(user);
+    }
+
+    @Transactional
+    public String updateNickname(User user, UpdateNicknameRequest updateNicknameRequest) {
+        String newNickname = updateNicknameRequest.nickname();
+
+        if (userRepository.existsByNickname(newNickname)) {
+            throw ErrorStatus.DUPLICATE_NICKNAME.serviceException();
+        }
+        return user.updateNickname(newNickname);
     }
 }

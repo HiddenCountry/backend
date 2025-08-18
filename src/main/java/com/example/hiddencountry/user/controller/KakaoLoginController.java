@@ -4,9 +4,11 @@ import com.example.hiddencountry.global.annotation.HiddenCountryUser;
 import com.example.hiddencountry.global.model.ApiResponse;
 import com.example.hiddencountry.global.status.SuccessStatus;
 import com.example.hiddencountry.user.domain.User;
+import com.example.hiddencountry.user.model.request.UpdateNicknameRequest;
 import com.example.hiddencountry.user.model.response.AuthorizationToken;
 import com.example.hiddencountry.user.model.response.KakaoUserInfoResponseDto;
 import com.example.hiddencountry.user.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -29,6 +31,17 @@ public class KakaoLoginController {
         return ApiResponse.onSuccess(
                 SuccessStatus.USER_KAKAO_LOGIN_SUCCESS,
                 userService.generateTokenAfterKakaoAuth(userInfo));
+    }
+
+    @PatchMapping("/nickname")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<String> updateNickname(
+            @HiddenCountryUser User user,
+            @RequestBody @Valid UpdateNicknameRequest updateNicknameRequest)
+    {
+        return ApiResponse.onSuccess(
+                SuccessStatus.UPDATE_NICKNAME_SUCCESS,
+                userService.updateNickname(user, updateNicknameRequest));
     }
 
     @GetMapping("/test")

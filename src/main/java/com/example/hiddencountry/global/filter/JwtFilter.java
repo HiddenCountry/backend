@@ -1,7 +1,7 @@
 package com.example.hiddencountry.global.filter;
 
+import com.example.hiddencountry.global.exception.JwtTokenAuthenticationException;
 import com.example.hiddencountry.global.jwt.JwtTokenProvider;
-import com.example.hiddencountry.global.status.ErrorStatus;
 import com.example.hiddencountry.global.util.SecurityConstants;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
@@ -44,17 +44,22 @@ public class JwtFilter extends OncePerRequestFilter {
 
 		String accessToken = resolveAccessToken(request);
 
-		if (accessToken == null) {
-			throw ErrorStatus.NOT_EXIST_ACCESSTOKEN.serviceException();
+		try {
+			if (accessToken != null) {
+				if (jwtUtil.validateToken(accessToken)) {
+					SecurityContextHolder.getContext()
+							.setAuthentication(jwtUtil.getAuthentication(accessToken));
+				} else {
+					log.debug("invalid accessToken: {}", accessToken);
+					// 액세스 토큰을 담아 요청 보냈지만 유효하지 않은 액세스 토큰일 경우, 무조건 에러 코드 반환
+					throw new JwtTokenAuthenticationException("invalid accessToken");
+				}
+			} else {
+				throw new JwtTokenAuthenticationException("Access Token not exist");
+			}
+		} catch (JwtTokenAuthenticationException e) {
+			request.setAttribute("exception", e);
 		}
-
-		if (!jwtUtil.validateToken(accessToken)) {
-			log.debug("invalid accessToken: {}", accessToken);
-			throw ErrorStatus.INVALID_ACCESSTOKEN.serviceException();
-		}
-
-		SecurityContextHolder.getContext()
-				.setAuthentication(jwtUtil.getAuthentication(accessToken));
 
 		filterChain.doFilter(request, response);
 	}
