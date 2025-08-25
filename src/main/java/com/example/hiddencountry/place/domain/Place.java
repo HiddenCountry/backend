@@ -33,6 +33,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class Place {
+
 	@Id
 	@Column(name = "id", nullable = false)
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -68,7 +69,7 @@ public class Place {
 	private Location location;
 
 	@NotNull
-	@Column(name = "title", nullable = false, length = 50)
+	@Column(name = "title", nullable = false, length = 150)
 	private String title;
 
 	@NotNull
@@ -77,7 +78,19 @@ public class Place {
 	private Season rSeason; // 추천계절
 
 	@OneToMany(mappedBy = "place", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<PlaceCountry> placeCountries = new ArrayList<>();
+	private List<PlaceCountry> placeCountries;
+
+	@NotNull
+	@Column(name = "review_count", nullable = false)
+	private long reviewCount;
+
+	@NotNull
+	@Column(name = "review_score_average", nullable = false)
+	private float reviewScoreAverage;
+
+	@NotNull
+	@Column(name = "view_count", nullable = false)
+	private long viewCount;
 
 	public void changeSeason(Season newSeason) {
 		if (newSeason == null) {
