@@ -1,5 +1,6 @@
 package com.example.hiddencountry.place.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.example.hiddencountry.place.domain.Place;
@@ -25,8 +26,16 @@ public class PlaceThumbnailModel {
 	Season season;
 	List<String> hashtags;
 	Boolean isBookmarked;
+	String title;
 
-	public static PlaceThumbnailModel toPlaceThumbnailModel(Place place,List<String> hashtags,Boolean isBookmarked){
+	public static PlaceThumbnailModel toPlaceThumbnailModel(Place place,Boolean isBookmarked){
+		List<String> hashtags = new ArrayList<>();
+		if (place.getTopHashtag1() != null) {
+			hashtags.add(place.getTopHashtag1().getDescription());
+		}
+		if (place.getTopHashtag2() != null) {
+			hashtags.add(place.getTopHashtag2().getDescription());
+		}
 		return PlaceThumbnailModel.builder()
 			.id(place.getId())
 			.firstImage(place.getFirstImage())
@@ -36,12 +45,19 @@ public class PlaceThumbnailModel {
 			.reviewCount(place.getReviewCount())
 			.season(place.getRSeason())
 			.hashtags(hashtags)
+			.title(place.getTitle())
 			.isBookmarked(isBookmarked).build();
 	}
 
-	public static PlaceThumbnailModel toPlaceThumbnailModel(PlaceDistanceModel p,List<String> hashtags,Boolean isBookmarked) {
+	public static PlaceThumbnailModel toPlaceThumbnailModel(PlaceDistanceModel p,Boolean isBookmarked) {
 		var place = p.getPlace();
-		System.out.println(p.getPlace().getAddr1() + " - " +p.getDistance());
+		List<String> hashtags = new ArrayList<>();
+		if (place.getTopHashtag1() != null) {
+			hashtags.add(place.getTopHashtag1().getDescription());
+		}
+		if (place.getTopHashtag2() != null) {
+			hashtags.add(place.getTopHashtag2().getDescription());
+		}
 		return PlaceThumbnailModel.builder()
 			.id(place.getId())
 			.firstImage(place.getFirstImage())
@@ -51,6 +67,7 @@ public class PlaceThumbnailModel {
 			.reviewCount(place.getReviewCount())
 			.season(place.getRSeason())
 			.hashtags(hashtags)
+			.title(place.getTitle())
 			.isBookmarked(isBookmarked)
 			.build();
 	}

@@ -28,7 +28,10 @@ public enum ErrorStatus {
     INVALID_ACCESSTOKEN(HttpStatus.BAD_REQUEST, "COMMON400","invalid accessToken"),
     NOT_EXIST_ACCESSTOKEN(HttpStatus.BAD_REQUEST, "COMMON400","Access Token not exist"),
     // User Error
-    DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "USER_DUPLICATE_NICKNAME","중복된 닉네임입니다.");
+    DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "USER_DUPLICATE_NICKNAME","중복된 닉네임입니다."),
+
+    // Place Error
+    PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "PLACE_NOT_FOUND","Place not found");
 
     private final HttpStatus httpStatus;
     private final String code;
