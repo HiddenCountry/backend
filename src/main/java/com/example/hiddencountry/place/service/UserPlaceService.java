@@ -1,9 +1,17 @@
 package com.example.hiddencountry.place.service;
 
-import org.springframework.stereotype.Service;
+import java.util.List;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+
+import com.example.hiddencountry.global.pagination.PaginationModel;
 import com.example.hiddencountry.place.domain.Place;
 import com.example.hiddencountry.place.domain.UserPlace;
+import com.example.hiddencountry.place.model.PlaceThumbnailModel;
 import com.example.hiddencountry.place.repository.UserPlaceRepository;
 import com.example.hiddencountry.place.service.module.CommonPlaceService;
 import com.example.hiddencountry.user.domain.User;
@@ -53,6 +61,18 @@ public class UserPlaceService {
 			});
 	}
 
+	public PaginationModel<PlaceThumbnailModel> getUserBookmarkPlaces(User user,Integer page, Integer size) {
+		log.info(" {} ", user.getId() );
+
+		Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+		Page<UserPlace> userPlacePage = userPlaceRepository.findByUser(user, pageable);
+		List<PlaceThumbnailModel> placeThumbnailModelList = userPlacePage.getContent().stream()
+			.map(userPlace -> PlaceThumbnailModel.toPlaceThumbnailModel(
+				userPlace.getPlace(),  true
+			))
+			.toList();
+		return PaginationModel.toPaginationModel(placeThumbnailModelList,userPlacePage);
+	}
 
 
 }
