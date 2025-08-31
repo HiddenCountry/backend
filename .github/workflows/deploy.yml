@@ -27,7 +27,7 @@ jobs:
       - name: Build (skip tests for speed)
         run: ./gradlew clean bootJar -x test --no-daemon
 
-      # === 커밋 SHA로 고유 파일명 부여 ===
+      # 커밋 SHA로 고유 파일명 부여 (SNAPSHOT 혼선 방지)
       - name: Stamp JAR with commit SHA
         id: stamp
         run: |
@@ -42,8 +42,8 @@ jobs:
           echo "jar_name=${RENAMED}" >> $GITHUB_OUTPUT
           echo "Stamped: ${RENAMED}"
 
-      # === 정확히 그 파일만 업로드 ===
-      - name: Copy JAR to EC2
+      # 정확히 그 파일만 업로드하되, build/libs/ 디렉터리는 벗겨서 /srv/hiddencountry/에 바로 놓기
+      - name: Copy JAR to EC2 (flatten path)
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -52,8 +52,9 @@ jobs:
           source: ${{ env.JAR_PATH }}
           target: /srv/hiddencountry/
           overwrite: true
+          strip_components: 2   # <<< build/libs 제거 → 파일만 루트로 업로드
 
-      # === stop → relink(절대경로, 지정 JAR만) → start → 헬스/정리 ===
+      # stop → relink(절대경로, 지정 JAR만) → start → 헬스/정리
       - name: Restart service on EC2 (safe stop → relink → start + cleanup)
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -69,16 +70,13 @@ jobs:
 
             cleanup_keep_backups() {
               echo "[DBG] Cleanup: keep last 3 backups"
-              # 백업: 최근 3개만 유지 (4번째부터 삭제)
               ls -1t app.jar.prev.*.jar 2>/dev/null | tail -n +4 | xargs -r rm -f || true
 
               echo "[DBG] Cleanup: keep ONLY the current regular JAR"
               local CUR
               CUR="$(readlink -f app.jar || true)"
-              # 일반 JAR 전부 나열(백업 제외)
               mapfile -t JARS < <(find "$APP_DIR" -maxdepth 1 -type f -name "*.jar" ! -name "app.jar.prev.*.jar" -printf "%p\n" 2>/dev/null)
               for J in "${JARS[@]:-}"; do
-                # 현재 링크가 가리키는 파일(CUR)만 보존, 나머지 삭제
                 if [ -n "${CUR:-}" ] && [ "$(readlink -f "$J")" = "$CUR" ]; then
                   continue
                 fi
@@ -99,16 +97,19 @@ jobs:
             fi
             [ -z "${JAR_NAME:-}" ] && { echo "::error::JAR_NAME not provided."; exit 1; }
 
-            # 1) 대상 JAR 확인 (정확한 파일명만 허용)
             cd "$APP_DIR"
+            ls -al || true
+
+            # 1) 정확한 파일명 존재 확인 (이제는 루트에 있어야 함)
             if [ ! -f "$JAR_NAME" ]; then
               echo "::error::Uploaded JAR '$JAR_NAME' not found in $APP_DIR"
-              ls -al
+              echo "[HINT] scp-action가 build/libs/ 하위로 올렸다면 strip_components 설정을 확인하세요."
+              ls -R .
               exit 1
             fi
             ABS_NEW="$(readlink -f "$JAR_NAME")"
 
-            # 2) stop → relink(절대경로) (레이스 방지)
+            # 2) stop → relink(절대경로)
             echo "[DBG] Stop service"
             sudo systemctl stop "$SVC" || true
 
