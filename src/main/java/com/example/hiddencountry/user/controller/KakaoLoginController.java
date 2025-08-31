@@ -8,6 +8,8 @@ import com.example.hiddencountry.user.model.request.UpdateNicknameRequest;
 import com.example.hiddencountry.user.model.response.AuthorizationToken;
 import com.example.hiddencountry.user.model.response.KakaoUserInfoResponseDto;
 import com.example.hiddencountry.user.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,10 +35,14 @@ public class KakaoLoginController {
                 userService.generateTokenAfterKakaoAuth(userInfo));
     }
 
+    @Operation(
+            summary = "닉네임 수정 API",
+            description = ""
+    )
     @PatchMapping("/nickname")
     @ResponseStatus(HttpStatus.OK)
     public ApiResponse<String> updateNickname(
-            @HiddenCountryUser User user,
+            @Parameter(hidden = true) @HiddenCountryUser User user,
             @RequestBody @Valid UpdateNicknameRequest updateNicknameRequest)
     {
         return ApiResponse.onSuccess(
