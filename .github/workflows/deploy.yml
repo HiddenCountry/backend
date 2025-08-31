@@ -2,7 +2,7 @@ name: Build & Deploy (JAR → EC2)
 
 on:
   push:
-    branches: [ "chore/#9_cicd" ]   # 배포 트리거 브랜치
+    branches: [ "chore/#9_cicd" ]
 
 jobs:
   build-and-deploy:
@@ -27,8 +27,7 @@ jobs:
       - name: Build (skip tests for speed)
         run: ./gradlew clean bootJar -x test --no-daemon
 
-      # === EC2로 파일 복사 (SCP) ===
-      # build/libs/*.jar 를 /srv/hiddencountry/ 바로 아래에 복사
+      # build/libs/*.jar 를 /srv/hiddencountry/ 바로 아래로 복사
       - name: Copy JAR to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -39,8 +38,7 @@ jobs:
           target: /srv/hiddencountry/
           overwrite: true
 
-      # === EC2에서 심볼릭 링크 갱신 + 서비스 재시작 + 포트/헬스체크 ===
-      - name: Restart service on EC2 (SSH + debug)
+      - name: Restart service on EC2 (safe stop → relink → start)
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -52,19 +50,17 @@ jobs:
             SVC="hiddencountry"
             PORT="8080"
 
-            echo "[DBG] Ensure Java exists"
+            echo "[DBG] Check Java"
             if ! command -v java >/dev/null 2>&1; then
               echo "::error::Java not installed on EC2. Install openjdk-17-jre-headless once and retry."
               exit 1
             fi
             java -version
 
-            echo "[DBG] Ensure app dir"
+            echo "[DBG] Ensure app dir and list files"
             mkdir -p "$APP_DIR"
             cd "$APP_DIR"
-
-            echo "[DBG] List current files"
-            ls -al
+            ls -al || true
 
             # 최신 JAR 결정 (루트 우선, 없으면 재귀 검색)
             NEW_JAR="$(ls -1t *.jar 2>/dev/null | head -n1 || true)"
@@ -81,6 +77,10 @@ jobs:
             fi
             echo "[DBG] NEW_JAR=$NEW_JAR"
 
+            # 서비스 정지(링크 교체 중 레이스 방지)
+            echo "[DBG] Stop service: $SVC"
+            sudo systemctl stop "$SVC" || true
+
             # 이전 링크 백업(선택)
             if [ -L app.jar ]; then
               PREV_TARGET=$(readlink -f app.jar || true)
@@ -90,14 +90,19 @@ jobs:
               fi
             fi
 
-            # 새 JAR로 링크 교체
+            # 대상 JAR 읽기 가능 보장 후 링크 교체
+            chmod 644 "$NEW_JAR" || true
             ln -sfn "$NEW_JAR" app.jar
             echo "[DBG] app.jar -> $(readlink -f app.jar)"
+            if [ ! -r app.jar ]; then
+              echo "::error::app.jar is not readable"
+              exit 1
+            fi
 
-            # 서비스 재시작
-            echo "[DBG] Restart systemd service: $SVC"
+            # 서비스 시작
+            echo "[DBG] Start service: $SVC"
             sudo systemctl daemon-reload
-            sudo systemctl restart "$SVC"
+            sudo systemctl start "$SVC"
 
             # 포트 리스닝 대기 (최대 120초)
             echo "[DBG] Wait for :$PORT listening (up to 120s)"
