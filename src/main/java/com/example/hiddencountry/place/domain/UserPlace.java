@@ -35,5 +35,13 @@ public class UserPlace {
 	@JoinColumn(name = "place_id", nullable = false)
 	private Place place;
 
+	public static UserPlace of(User user, Place place) {
+		UserPlace up = new UserPlace();
+		up.setUser(user);
+		up.setPlace(place);
+		up.setId(new UserPlaceId(user.getId(), place.getId()));
+		return up;
+	}
+
 }
 

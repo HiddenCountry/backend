@@ -13,6 +13,10 @@ public class SecurityConstants {
             "/login/page",
             "/callback",
             "/error",
-            "/actuator/**"
+            "/actuator/**",
+            "/place",
+            "/swagger-ui.html",
+            "/swagger-ui/**",
+            "/v3/api-docs/**"
     );
 }

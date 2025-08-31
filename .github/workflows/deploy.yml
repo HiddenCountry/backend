@@ -86,7 +86,7 @@ jobs:
               [ -n "$PREV_TARGET" ] && [ -f "$PREV_TARGET" ] && cp -f "$PREV_TARGET" "app.jar.prev.$(date +%Y%m%d%H%M%S).jar" || true
             fi
 
-            # 🔸 절대경로 링크로 고정(오탐 방지)
+            # 절대경로 링크로 고정(오탐 방지)
             ABS_NEW="$(readlink -f "$NEW_JAR")"
             chmod 644 "$ABS_NEW" || true
             ln -sfn "$ABS_NEW" app.jar
