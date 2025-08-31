@@ -28,7 +28,7 @@ jobs:
         run: ./gradlew clean bootJar -x test --no-daemon
 
       # === EC2로 파일 복사 (SCP) ===
-      # build/libs/*.jar 를 그대로 /srv/hiddencountry/ 바로 아래에 복사
+      # build/libs/*.jar 를 /srv/hiddencountry/ 바로 아래에 복사
       - name: Copy JAR to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -39,8 +39,8 @@ jobs:
           target: /srv/hiddencountry/
           overwrite: true
 
-      # === EC2에서 심볼릭 링크 갱신 + 서비스 재시작 + 헬스체크 ===
-      - name: Restart service on EC2
+      # === EC2에서 심볼릭 링크 갱신 + 서비스 재시작 + 포트/헬스체크 ===
+      - name: Restart service on EC2 (SSH + debug)
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -50,29 +50,41 @@ jobs:
             set -e
             APP_DIR="/srv/hiddencountry"
             SVC="hiddencountry"
+            PORT="8080"
 
-            # 안전: 디렉토리/툴 확인
-            sudo apt-get update -y && sudo apt-get install -y curl || true
+            echo "[DBG] Ensure Java exists"
+            if ! command -v java >/dev/null 2>&1; then
+              echo "::error::Java not installed on EC2. Install openjdk-17-jre-headless once and retry."
+              exit 1
+            fi
+            java -version
+
+            echo "[DBG] Ensure app dir"
             mkdir -p "$APP_DIR"
             cd "$APP_DIR"
 
-            # 최신 JAR 찾아보기 (루트에 바로 있다고 가정)
+            echo "[DBG] List current files"
+            ls -al
+
+            # 최신 JAR 결정 (루트 우선, 없으면 재귀 검색)
             NEW_JAR="$(ls -1t *.jar 2>/dev/null | head -n1 || true)"
             if [ -z "$NEW_JAR" ]; then
-              # 혹시 하위 경로에 있으면 찾아서 꺼내오기 (백업 플랜)
+              echo "[DBG] No JAR in root, search recursively..."
               NEW_JAR_PATH=$(find "$APP_DIR" -type f -name "*.jar" -printf "%T@ %p\n" 2>/dev/null | sort -nr | head -n1 | awk '{print $2}')
               if [ -n "$NEW_JAR_PATH" ]; then
                 NEW_JAR=$(basename "$NEW_JAR_PATH")
                 cp -f "$NEW_JAR_PATH" "./$NEW_JAR"
               else
-                echo "No JAR found under $APP_DIR"
+                echo "::error::No JAR found under $APP_DIR"
                 exit 1
               fi
             fi
+            echo "[DBG] NEW_JAR=$NEW_JAR"
 
             # 이전 링크 백업(선택)
             if [ -L app.jar ]; then
-              PREV_TARGET=$(readlink app.jar || true)
+              PREV_TARGET=$(readlink -f app.jar || true)
+              echo "[DBG] Existing app.jar -> $PREV_TARGET"
               if [ -n "$PREV_TARGET" ] && [ -f "$PREV_TARGET" ]; then
                 cp -f "$PREV_TARGET" "app.jar.prev.$(date +%Y%m%d%H%M%S).jar"
               fi
@@ -80,27 +92,61 @@ jobs:
 
             # 새 JAR로 링크 교체
             ln -sfn "$NEW_JAR" app.jar
+            echo "[DBG] app.jar -> $(readlink -f app.jar)"
 
             # 서비스 재시작
+            echo "[DBG] Restart systemd service: $SVC"
             sudo systemctl daemon-reload
             sudo systemctl restart "$SVC"
 
-            # 헬스체크 (Actuator 권장)
-            for i in {1..30}; do
+            # 포트 리스닝 대기 (최대 120초)
+            echo "[DBG] Wait for :$PORT listening (up to 120s)"
+            for i in {1..60}; do
               sleep 2
-              if curl -fsS http://127.0.0.1:8080/actuator/health | grep -q '"status":"UP"'; then
-                echo "Health OK"
-                exit 0
+              if ss -ltnp | grep -q ":$PORT"; then
+                echo "[DBG] Port $PORT is listening."
+                break
+              fi
+              if ! sudo systemctl is-active --quiet "$SVC"; then
+                echo "[DBG] Service not active. Recent logs:"
+                sudo journalctl -u "$SVC" -n 80 --no-pager || true
+              fi
+              if [ $i -eq 60 ]; then
+                echo "::error::Port $PORT not listening after 120s."
+                sudo systemctl status "$SVC" --no-pager || true
+                sudo journalctl -u "$SVC" -n 200 --no-pager || true
+                exit 1
               fi
             done
 
-            echo "Health check failed. Rolling back..."
+            # 헬스체크 (최대 90초)
+            echo "[DBG] Health check /actuator/health (up to 90s)"
+            for i in {1..30}; do
+              sleep 3
+              if curl -fsS http://127.0.0.1:$PORT/actuator/health | grep -q '"status":"UP"'; then
+                echo "Health OK"
+                exit 0
+              fi
+              if ! sudo systemctl is-active --quiet "$SVC"; then
+                echo "[DBG] Service crashed during health wait. Logs:"
+                sudo journalctl -u "$SVC" -n 200 --no-pager || true
+                break
+              fi
+              if [ $i -eq 30 ]; then
+                echo "::error::Health check failed."
+                sudo systemctl status "$SVC" --no-pager || true
+                sudo journalctl -u "$SVC" -n 200 --no-pager || true
+              fi
+            done
+
+            echo "[DBG] Rolling back to previous JAR if exists..."
             PREV=$(ls -1t app.jar.prev.*.jar 2>/dev/null | head -n1 || true)
             if [ -n "$PREV" ]; then
               ln -sfn "$PREV" app.jar
               sudo systemctl restart "$SVC"
+              echo "[DBG] Rolled back. Current app.jar -> $(readlink -f app.jar)"
               exit 1
             else
-              echo "No prev jar to roll back."
+              echo "::warning::No prev jar to roll back."
               exit 1
             fi
