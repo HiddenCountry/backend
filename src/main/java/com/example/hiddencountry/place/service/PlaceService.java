@@ -54,7 +54,7 @@ public class PlaceService {
 		if(sortType != SortType.DISTANCE_ASC){
 			Pageable pageable = PageRequest.of(page, size, Sort.by(sortType.getDirection(),sortType.getColumnName()));
 
-			Page<Place> placePage = !title.isBlank() ?  placeRepository.searchAndNotDistance(areaCode,title, contentType, season, countryRegion, pageable) :
+			Page<Place> placePage = (title== null || !title.isBlank()) ?  placeRepository.searchAndNotDistance(areaCode,title, contentType, season, countryRegion, pageable) :
 				placeRepository.findFiltered(areaCode, contentType, season, countryRegion, pageable);
 			List<PlaceThumbnailModel> thumbnails = placePage.getContent().stream()
 				.map(place -> PlaceThumbnailModel.toPlaceThumbnailModel(
@@ -66,7 +66,7 @@ public class PlaceService {
 		else{
 			Pageable pageable = PageRequest.of(page, size);
 			Page<PlaceDistanceModel> placePage =
-				!title.isBlank() ?  placeRepository.searchAndDistance(latitude,longitude, areaCode,title, contentType, season, countryRegion, pageable):
+				(title== null || !title.isBlank()) ?  placeRepository.searchAndDistance(latitude,longitude, areaCode,title, contentType, season, countryRegion, pageable):
 				placeRepository.findFilteredByDistance(latitude,longitude, areaCode, contentType, season, countryRegion, pageable);
 			List<PlaceThumbnailModel> thumbnails = placePage.getContent().stream()
 				.map(p -> PlaceThumbnailModel.toPlaceThumbnailModel(p,  // hashtags
