@@ -12,6 +12,7 @@ public class SecurityConstants {
     public static final List<String> ALLOW_URLS = List.of(
             "/login/page",
             "/callback",
-            "/actuator/health"
+            "/error",
+            "/actuator/**"
     );
 }
