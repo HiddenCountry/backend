@@ -3,10 +3,12 @@ package com.example.hiddencountry.place.domain;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.hiddencountry.place.domain.type.AreaCode;
 import com.example.hiddencountry.place.domain.type.Cat1;
 import com.example.hiddencountry.place.domain.type.ContentType;
 import com.example.hiddencountry.place.domain.type.CountryRegion;
 import com.example.hiddencountry.place.domain.type.Season;
+import com.example.hiddencountry.review.domain.type.Tag;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -33,6 +35,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class Place {
+
 	@Id
 	@Column(name = "id", nullable = false)
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,6 +59,9 @@ public class Place {
 	@Convert(converter = ContentTypeConverter.class)
 	private ContentType contentType;
 
+	@Convert(converter = AreaCodeConverter.class)
+	private AreaCode areaCode;
+
 	@Column(name = "first_image", nullable = false,length = 500)
 	private String firstImage;
 
@@ -68,7 +74,7 @@ public class Place {
 	private Location location;
 
 	@NotNull
-	@Column(name = "title", nullable = false, length = 50)
+	@Column(name = "title", nullable = false, length = 150)
 	private String title;
 
 	@NotNull
@@ -77,13 +83,38 @@ public class Place {
 	private Season rSeason; // 추천계절
 
 	@OneToMany(mappedBy = "place", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<PlaceCountry> placeCountries = new ArrayList<>();
+	private List<PlaceCountry> placeCountries;
+
+	@NotNull
+	@Column(name = "review_count", nullable = false)
+	private long reviewCount;
+
+	@NotNull
+	@Column(name = "review_score_average", nullable = false)
+	private float reviewScoreAverage;
+
+	@NotNull
+	@Column(name = "view_count", nullable = false)
+	private long viewCount;
+
+	@Column(name = "top_hashtag1", length = 50)
+	@Enumerated(EnumType.STRING)
+	private Tag topHashtag1;
+
+	@Column(name = "top_hashtag2", length = 50)
+	@Enumerated(EnumType.STRING)
+	private Tag topHashtag2;
 
 	public void changeSeason(Season newSeason) {
 		if (newSeason == null) {
 			throw new IllegalArgumentException("추천 계절은 null일 수 없습니다.");
 		}
 		this.rSeason = newSeason;
+	}
+
+	public void changeTopHashtags(Tag top1, Tag top2) {
+		this.topHashtag1 = top1;
+		this.topHashtag2 = top2;
 	}
 
 	public void addPlaceCountries(CountryRegion... regions) {

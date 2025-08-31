@@ -10,21 +10,21 @@ import lombok.Getter;
 public enum ContentType {
 
 	/** 관광지 */
-	_12(12, "관광지"),
+	TOURIST_SPOT(12, "관광지"),
 	/** 문화시설 */
-	_14(14, "문화시설"),
+	CULTURAL_FACILITY(14, "문화시설"),
 	/** 행사/공연/축제 */
-	_15(15, "행사/공연/축제"),
+	EVENT(15, "행사/공연/축제"),
 	/** 여행코스 */
-	_25(25, "여행코스"),
+	TRAVEL_COURSE(25, "여행코스"),
 	/** 레포츠 */
-	_28(28, "레포츠"),
+	LEISURE_SPORTS(28, "레포츠"),
 	/** 숙박 */
-	_32(32, "숙박"),
+	ACCOMMODATION(32, "숙박"),
 	/** 쇼핑 */
-	_38(38, "쇼핑"),
+	SHOPPING(38, "쇼핑"),
 	/** 음식점 */
-	_39(39, "음식점");
+	RESTAURANT(39, "음식점");
 
 
 	private final int code;
