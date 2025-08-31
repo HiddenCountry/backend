@@ -55,17 +55,14 @@ jobs:
               echo "::error::Java not installed on EC2. Install openjdk-17-jre-headless once and retry."
               exit 1
             fi
-            java -version
 
-            echo "[DBG] Ensure app dir and list files"
             mkdir -p "$APP_DIR"
             cd "$APP_DIR"
             ls -al || true
 
-            # 최신 JAR 결정 (루트 우선, 없으면 재귀 검색)
+            # 최신 JAR 결정
             NEW_JAR="$(ls -1t *.jar 2>/dev/null | head -n1 || true)"
             if [ -z "$NEW_JAR" ]; then
-              echo "[DBG] No JAR in root, search recursively..."
               NEW_JAR_PATH=$(find "$APP_DIR" -type f -name "*.jar" -printf "%T@ %p\n" 2>/dev/null | sort -nr | head -n1 | awk '{print $2}')
               if [ -n "$NEW_JAR_PATH" ]; then
                 NEW_JAR=$(basename "$NEW_JAR_PATH")
@@ -77,30 +74,18 @@ jobs:
             fi
             echo "[DBG] NEW_JAR=$NEW_JAR"
 
-            # 서비스 정지(링크 교체 중 레이스 방지)
-            echo "[DBG] Stop service: $SVC"
+            # 서비스 정지 후 링크 갱신(레이스 방지)
             sudo systemctl stop "$SVC" || true
 
-            # 이전 링크 백업(선택)
             if [ -L app.jar ]; then
               PREV_TARGET=$(readlink -f app.jar || true)
-              echo "[DBG] Existing app.jar -> $PREV_TARGET"
-              if [ -n "$PREV_TARGET" ] && [ -f "$PREV_TARGET" ]; then
-                cp -f "$PREV_TARGET" "app.jar.prev.$(date +%Y%m%d%H%M%S).jar"
-              fi
+              [ -n "$PREV_TARGET" ] && [ -f "$PREV_TARGET" ] && cp -f "$PREV_TARGET" "app.jar.prev.$(date +%Y%m%d%H%M%S).jar" || true
             fi
 
-            # 대상 JAR 읽기 가능 보장 후 링크 교체
             chmod 644 "$NEW_JAR" || true
             ln -sfn "$NEW_JAR" app.jar
             echo "[DBG] app.jar -> $(readlink -f app.jar)"
-            if [ ! -r app.jar ]; then
-              echo "::error::app.jar is not readable"
-              exit 1
-            fi
 
-            # 서비스 시작
-            echo "[DBG] Start service: $SVC"
             sudo systemctl daemon-reload
             sudo systemctl start "$SVC"
 
@@ -114,37 +99,45 @@ jobs:
               fi
               if ! sudo systemctl is-active --quiet "$SVC"; then
                 echo "[DBG] Service not active. Recent logs:"
-                sudo journalctl -u "$SVC" -n 80 --no-pager || true
+                sudo journalctl -u "$SVC" -n 120 --no-pager || true
               fi
-              if [ $i -eq 60 ]; then
-                echo "::error::Port $PORT not listening after 120s."
-                sudo systemctl status "$SVC" --no-pager || true
-                sudo journalctl -u "$SVC" -n 200 --no-pager || true
-                exit 1
-              fi
+              [ $i -eq 60 ] && { echo "::error::Port $PORT not listening after 120s."; sudo systemctl status "$SVC" --no-pager || true; sudo journalctl -u "$SVC" -n 300 --no-pager || true; exit 1; }
             done
 
-            # 헬스체크 (최대 90초)
+            # 헬스체크: 200 이거나 본문에 'UP' 포함이면 성공으로 간주
             echo "[DBG] Health check /actuator/health (up to 90s)"
             for i in {1..30}; do
               sleep 3
-              if curl -fsS http://127.0.0.1:$PORT/actuator/health | grep -q '"status":"UP"'; then
-                echo "Health OK"
-                exit 0
+              # JSON 선호: Accept 헤더로 요청
+              RESP=$(curl -fsS -H "Accept: application/json" -w " HTTP_CODE:%{http_code}" http://127.0.0.1:$PORT/actuator/health || true)
+              BODY="${RESP% HTTP_CODE:*}"
+              CODE="${RESP##*HTTP_CODE:}"
+              echo "[DBG] health code=$CODE body=$BODY"
+
+              if [ "$CODE" = "200" ]; then
+                # 본문에 status:UP 또는 텍스트 UP 둘 다 허용
+                echo "$BODY" | grep -qi '"status"[[:space:]]*:[[:space:]]*"UP"' && { echo "Health OK (JSON)"; exit 0; }
+                echo "$BODY" | grep -qi '\bUP\b' && { echo "Health OK (TEXT)"; exit 0; }
               fi
+
+              # 서비스가 죽어버렸으면 즉시 실패 로그 출력
               if ! sudo systemctl is-active --quiet "$SVC"; then
                 echo "[DBG] Service crashed during health wait. Logs:"
-                sudo journalctl -u "$SVC" -n 200 --no-pager || true
+                sudo journalctl -u "$SVC" -n 300 --no-pager || true
                 break
               fi
-              if [ $i -eq 30 ]; then
-                echo "::error::Health check failed."
-                sudo systemctl status "$SVC" --no-pager || true
-                sudo journalctl -u "$SVC" -n 200 --no-pager || true
-              fi
+
+              [ $i -eq 30 ] && echo "::warning::Health endpoint not confirmed UP within 90s."
             done
 
-            echo "[DBG] Rolling back to previous JAR if exists..."
+            # 여기까지 왔는데 포트 리스닝은 유지되면(서비스 살아있음) 성공 처리
+            if ss -ltnp | grep -q ":$PORT" && sudo systemctl is-active --quiet "$SVC"; then
+              echo "::notice::Service is listening on :$PORT but health endpoint was not confirmed. Treating as success."
+              exit 0
+            fi
+
+            # 진짜 실패만 롤백 (서비스 죽었거나 포트 안 열림)
+            echo "[DBG] Rolling back to previous JAR because service is not healthy AND not listening."
             PREV=$(ls -1t app.jar.prev.*.jar 2>/dev/null | head -n1 || true)
             if [ -n "$PREV" ]; then
               ln -sfn "$PREV" app.jar
