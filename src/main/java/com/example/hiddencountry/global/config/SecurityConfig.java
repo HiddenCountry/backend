@@ -53,8 +53,6 @@ public class SecurityConfig {
 
 		// 경로별 인가 설정
 		http.authorizeHttpRequests(auth -> auth
-				.requestMatchers(EndpointRequest.to("health", "info")).permitAll()
-				// 그 외 화이트리스트
 				.requestMatchers(SecurityConstants.ALLOW_URLS.toArray(new String[0])).permitAll()
 				.anyRequest().authenticated()
 		);
