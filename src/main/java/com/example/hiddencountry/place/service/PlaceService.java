@@ -6,18 +6,17 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.stereotype.Service;
 
 import com.example.hiddencountry.global.pagination.PaginationModel;
-import com.example.hiddencountry.global.status.ErrorStatus;
 import com.example.hiddencountry.place.domain.Place;
 import com.example.hiddencountry.place.domain.type.AreaCode;
-import com.example.hiddencountry.place.domain.type.Cat1;
 import com.example.hiddencountry.place.domain.type.ContentType;
 import com.example.hiddencountry.place.domain.type.CountryRegion;
 import com.example.hiddencountry.place.domain.type.Season;
 import com.example.hiddencountry.place.domain.type.SortType;
+import com.example.hiddencountry.place.model.InfoItemModel;
+import com.example.hiddencountry.place.model.PlaceDetailInfoModel;
 import com.example.hiddencountry.place.model.PlaceDistanceModel;
 import com.example.hiddencountry.place.model.PlaceThumbnailModel;
 import com.example.hiddencountry.place.repository.PlaceRepository;
@@ -34,6 +33,7 @@ public class PlaceService {
 
 	private final PlaceRepository placeRepository;
 	private final CommonPlaceService commonPlaceService;
+	private final KorApiService korApiService;
 
 	///  todo : 해시태그
 	public PaginationModel<PlaceThumbnailModel> getPlaceThumbnailsWithSorting(
@@ -74,6 +74,26 @@ public class PlaceService {
 				.toList();
 			return PaginationModel.toPaginationModel(thumbnails,placePage);
 		}
+	}
+
+	public PlaceDetailInfoModel dd(User user,Long id,Double latitude,Double longitude){
+		Place place = commonPlaceService.findById(id);
+
+		List<InfoItemModel> infoItemModelList = korApiService.getDetailIntro(place.getContentId(),place.getContentType().getCode()).block();
+		String overview = korApiService.getDetailOverview(place.getContentId());
+		infoItemModelList.add(0, new InfoItemModel("개요", overview));
+		return PlaceDetailInfoModel.builder()
+			.id(id)
+			.title(place.getTitle())
+			.reviewScoreAverage(place.getReviewScoreAverage())
+			.address(place.getAddr1())
+			.contentTypeKoreanName(place.getContentType().getName())
+			.distance(place.getLocation().distanceTo(latitude,longitude))
+			.infoItemList(infoItemModelList)
+			.latitude(place.getLocation().getMapx())
+			.longitude(place.getLocation().getMapy())
+			.isBookmarked(commonPlaceService.isBookmarked(user,place))
+			.build();
 	}
 
 

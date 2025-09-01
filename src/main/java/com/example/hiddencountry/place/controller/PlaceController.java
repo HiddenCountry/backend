@@ -17,8 +17,11 @@ import com.example.hiddencountry.place.domain.type.ContentType;
 import com.example.hiddencountry.place.domain.type.CountryRegion;
 import com.example.hiddencountry.place.domain.type.Season;
 import com.example.hiddencountry.place.domain.type.SortType;
+import com.example.hiddencountry.place.model.InfoItemModel;
+import com.example.hiddencountry.place.model.PlaceDetailInfoModel;
 import com.example.hiddencountry.place.model.PlaceThumbnailModel;
 import com.example.hiddencountry.place.service.PlaceService;
+import com.example.hiddencountry.place.service.KorApiService;
 import com.example.hiddencountry.user.domain.User;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,6 +34,8 @@ import lombok.RequiredArgsConstructor;
 public class PlaceController {
 
 	private final PlaceService placeService;
+	private final KorApiService korApiService;
+
 	// 검색 아닐 때,
 	// filter : Cat1 , ContentType, Season
 	// sort : 리뷰 많은 순, 거리순, 조회순 , 평점 순
@@ -40,7 +45,7 @@ public class PlaceController {
 		description = ""
 	)
 	@ResponseStatus(HttpStatus.OK)
-	@GetMapping("/place")
+	@GetMapping("/places")
 	public ApiResponse<PaginationModel<PlaceThumbnailModel>> getPlace(
 		@RequestParam @NotNull @Parameter(description = "페이지 번호 - 0 부터 시작", required = true, example = "0") Integer page,
 		@RequestParam @NotNull @Parameter(description = "한 페이지 크기", required = true, example = "9") Integer size,
@@ -60,5 +65,31 @@ public class PlaceController {
 			user,page,size,areaCode,contentType,season,countryRegion,sortType,latitude,longitude,title
 		));
 	}
+
+
+	@Operation(
+		summary = "장소 상세정보 API",
+		description = ""
+	)
+	@ResponseStatus(HttpStatus.OK)
+	@GetMapping("/place")
+	public ApiResponse<PlaceDetailInfoModel> getPlace(
+		//@RequestParam Long contentId,
+		@RequestParam Long id,
+		@RequestParam(required = false) @Parameter(description = "위도", required = false , example = "37.5547") Double latitude,
+		@RequestParam(required = false) @Parameter(description = "경도", required = false , example = "126.9707") Double longitude,
+		@Parameter(hidden = true) @HiddenCountryUser User user
+	) {
+
+		return ApiResponse.onSuccess(
+			SuccessStatus.OK,
+			placeService.dd(user,id,latitude,longitude)
+		);
+	}
+
+	// 인근 관광지
+
+	// 일반 관광지 상세정보
+
 
 }
