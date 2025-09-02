@@ -23,4 +23,10 @@ jwt:
 
 kakao:
   client_id: ${REST_API_KEY}
-  redirect_uri: http://localhost:8080/callback
+  redirect_uri: ${KAKAO_REDIRECT_URI}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

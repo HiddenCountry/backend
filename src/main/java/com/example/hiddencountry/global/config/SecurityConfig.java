@@ -5,6 +5,7 @@ import com.example.hiddencountry.global.handler.JwtAccessDeniedHandler;
 import com.example.hiddencountry.global.jwt.JwtTokenProvider;
 import com.example.hiddencountry.global.util.SecurityConstants;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -51,10 +52,9 @@ public class SecurityConfig {
 		);
 
 		// 경로별 인가 설정
-		http.authorizeHttpRequests(authorizeRequests -> authorizeRequests
-			.requestMatchers(SecurityConstants.ALLOW_URLS.toArray(new String[0])).permitAll()
-			.anyRequest()
-			.authenticated()
+		http.authorizeHttpRequests(auth -> auth
+				.requestMatchers(SecurityConstants.ALLOW_URLS.toArray(new String[0])).permitAll()
+				.anyRequest().authenticated()
 		);
 
 		//예외 처리 핸들러 설정

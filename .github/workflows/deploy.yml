@@ -1,0 +1,174 @@
+name: Build & Deploy (JAR → EC2)
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Gradle (cache)
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Grant Gradle wrapper permissions
+        run: chmod +x ./gradlew
+
+      - name: Build (skip tests for speed)
+        run: ./gradlew clean bootJar -x test --no-daemon
+
+      # 커밋 SHA로 고유 파일명 부여 (SNAPSHOT 혼선 방지)
+      - name: Stamp JAR with commit SHA
+        id: stamp
+        run: |
+          set -e
+          SRC=$(ls -1 build/libs/*.jar | head -n1)
+          SHA_SHORT=${GITHUB_SHA::7}
+          RENAMED="hiddencountry-${SHA_SHORT}.jar"
+          cp -f "$SRC" "build/libs/${RENAMED}"
+          echo "JAR_PATH=build/libs/${RENAMED}" >> $GITHUB_ENV
+          echo "JAR_NAME=${RENAMED}" >> $GITHUB_ENV
+          echo "jar_path=build/libs/${RENAMED}" >> $GITHUB_OUTPUT
+          echo "jar_name=${RENAMED}" >> $GITHUB_OUTPUT
+          echo "Stamped: ${RENAMED}"
+
+      # 정확히 그 파일만 업로드하되, build/libs/ 디렉터리는 벗겨서 /srv/hiddencountry/에 바로 놓기
+      - name: Copy JAR to EC2 (flatten path)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: ${{ env.JAR_PATH }}
+          target: /srv/hiddencountry/
+          overwrite: true
+          strip_components: 2   # <<< build/libs 제거 → 파일만 루트로 업로드
+
+      # stop → relink(절대경로, 지정 JAR만) → start → 헬스/정리
+      - name: Restart service on EC2 (safe stop → relink → start + cleanup)
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: JAR_NAME
+          script: |
+            set -euo pipefail
+            APP_DIR="/srv/hiddencountry"
+            SVC="hiddencountry"
+            PORT="8080"
+
+            cleanup_keep_backups() {
+              echo "[DBG] Cleanup: keep last 3 backups"
+              ls -1t app.jar.prev.*.jar 2>/dev/null | tail -n +4 | xargs -r rm -f || true
+
+              echo "[DBG] Cleanup: keep ONLY the current regular JAR"
+              local CUR
+              CUR="$(readlink -f app.jar || true)"
+              mapfile -t JARS < <(find "$APP_DIR" -maxdepth 1 -type f -name "*.jar" ! -name "app.jar.prev.*.jar" -printf "%p\n" 2>/dev/null)
+              for J in "${JARS[@]:-}"; do
+                if [ -n "${CUR:-}" ] && [ "$(readlink -f "$J")" = "$CUR" ]; then
+                  continue
+                fi
+                rm -f "$J" || true
+              done
+            }
+
+            success_and_exit() {
+              cleanup_keep_backups
+              echo "✅ Deploy success."
+              exit 0
+            }
+
+            # 0) 사전 체크
+            if ! command -v java >/dev/null 2>&1; then
+              echo "::error::Java not installed on EC2. Install openjdk-17-jre-headless."
+              exit 1
+            fi
+            [ -z "${JAR_NAME:-}" ] && { echo "::error::JAR_NAME not provided."; exit 1; }
+
+            cd "$APP_DIR"
+            ls -al || true
+
+            # 1) 정확한 파일명 존재 확인 (이제는 루트에 있어야 함)
+            if [ ! -f "$JAR_NAME" ]; then
+              echo "::error::Uploaded JAR '$JAR_NAME' not found in $APP_DIR"
+              echo "[HINT] scp-action가 build/libs/ 하위로 올렸다면 strip_components 설정을 확인하세요."
+              ls -R .
+              exit 1
+            fi
+            ABS_NEW="$(readlink -f "$JAR_NAME")"
+
+            # 2) stop → relink(절대경로)
+            echo "[DBG] Stop service"
+            sudo systemctl stop "$SVC" || true
+
+            if [ -L app.jar ]; then
+              PREV_TARGET=$(readlink -f app.jar || true)
+              [ -n "${PREV_TARGET:-}" ] && [ -f "$PREV_TARGET" ] && cp -f "$PREV_TARGET" "app.jar.prev.$(date +%Y%m%d%H%M%S).jar" || true
+            fi
+
+            chmod 644 "$ABS_NEW" || true
+            ln -sfn "$ABS_NEW" app.jar
+            echo "[DBG] app.jar(before start) -> $(readlink -f app.jar)"
+
+            # 3) start
+            sudo systemctl daemon-reload
+            sudo systemctl start "$SVC"
+
+            # 4) 포트 리스닝 대기
+            echo "[DBG] Wait for :$PORT listening (up to 120s)"
+            for i in {1..60}; do
+              sleep 2
+              if ss -ltnp | grep -q ":$PORT"; then
+                echo "[DBG] Port $PORT is listening."
+                break
+              fi
+              if [ $i -eq 60 ]; then
+                echo "::error::Port $PORT not listening after 120s."
+                sudo systemctl status "$SVC" --no-pager || true
+                sudo journalctl -u "$SVC" -n 300 --no-pager || true
+                exit 1
+              fi
+            done
+
+            # 5) 헬스체크 (보안 401/403도 성공으로 간주)
+            echo "[DBG] Health check /actuator/health (accept 200/401/403)"
+            for i in {1..15}; do
+              sleep 3
+              CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$PORT/actuator/health || true)
+              echo "[DBG] health http_code=$CODE"
+              if [ "$CODE" = "200" ] || [ "$CODE" = "401" ] || [ "$CODE" = "403" ]; then
+                echo "[DBG] app.jar(after start) -> $(readlink -f app.jar)"
+                success_and_exit
+              fi
+            done
+
+            # 6) 마지막 안전망
+            if ss -ltnp | grep -q ":$PORT" && sudo systemctl is-active --quiet "$SVC"; then
+              echo "[DBG] app.jar(after start) -> $(readlink -f app.jar)"
+              success_and_exit
+            fi
+
+            # 7) 진짜 실패만 롤백
+            echo "[DBG] Rolling back..."
+            PREV=$(ls -1t app.jar.prev.*.jar 2>/dev/null | head -n1 || true)
+            if [ -n "${PREV:-}" ]; then
+              ln -sfn "$PREV" app.jar
+              sudo systemctl restart "$SVC"
+              echo "[DBG] Rolled back. app.jar -> $(readlink -f app.jar)"
+              exit 1
+            else
+              echo "::warning::No prev jar to roll back."
+              exit 1
+            fi
