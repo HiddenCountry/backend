@@ -49,9 +49,9 @@ public class PlaceController {
 	public ApiResponse<PaginationModel<PlaceThumbnailModel>> getPlace(
 		@RequestParam @NotNull @Parameter(description = "페이지 번호 - 0 부터 시작", required = true, example = "0") Integer page,
 		@RequestParam @NotNull @Parameter(description = "한 페이지 크기", required = true, example = "9") Integer size,
-		@RequestParam(required = false) @Parameter(description = "지역", required = false, example = "SEOUL") AreaCode areaCode,
-		@RequestParam(required = false) @Parameter(description = "관광 타입", required = false, example = "TOURIST_SPOT") ContentType contentType,
-		@RequestParam(required = false) @Parameter(description = "계절", required = false, example = "ALL") Season season,
+		@RequestParam(required = false) @Parameter(description = "지역", required = false, example = "SEOUL") List<AreaCode> areaCode,
+		@RequestParam(required = false) @Parameter(description = "관광 타입", required = false, example = "TOURIST_SPOT") List<ContentType> contentType,
+		@RequestParam(required = false) @Parameter(description = "계절", required = false, example = "ALL") List<Season> season,
 		@RequestParam @NotNull @Parameter(description = "나라", required = true, example = "NORTH_AMERICA") CountryRegion countryRegion,
 		@RequestParam @NotNull @Parameter(description = "정렬 방법", required = true, example = "REVIEW_COUNT_DESC") SortType sortType,
 		@RequestParam(required = false) @Parameter(description = "위도", required = false , example = "37.5547") Double latitude,
@@ -80,10 +80,9 @@ public class PlaceController {
 		@RequestParam(required = false) @Parameter(description = "경도", required = false , example = "126.9707") Double longitude,
 		@Parameter(hidden = true) @HiddenCountryUser User user
 	) {
-
 		return ApiResponse.onSuccess(
 			SuccessStatus.OK,
-			placeService.dd(user,id,latitude,longitude)
+			placeService.getPlaceDetailInfo(user,id,latitude,longitude)
 		);
 	}
 

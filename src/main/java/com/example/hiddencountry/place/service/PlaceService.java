@@ -40,9 +40,9 @@ public class PlaceService {
 		User user,
 		Integer page,
 		Integer size,
-		AreaCode areaCode,
-		ContentType contentType,
-		Season season,
+		List<AreaCode> areaCode,
+		List<ContentType> contentType,
+		List<Season> season,
 		CountryRegion countryRegion,
 		SortType sortType,
 		Double latitude,
@@ -76,12 +76,14 @@ public class PlaceService {
 		}
 	}
 
-	public PlaceDetailInfoModel dd(User user,Long id,Double latitude,Double longitude){
+	public PlaceDetailInfoModel getPlaceDetailInfo(User user,Long id,Double latitude,Double longitude){
 		Place place = commonPlaceService.findById(id);
 
 		List<InfoItemModel> infoItemModelList = korApiService.getDetailIntro(place.getContentId(),place.getContentType().getCode()).block();
 		String overview = korApiService.getDetailOverview(place.getContentId());
+
 		infoItemModelList.add(0, new InfoItemModel("개요", overview));
+
 		return PlaceDetailInfoModel.builder()
 			.id(id)
 			.title(place.getTitle())
