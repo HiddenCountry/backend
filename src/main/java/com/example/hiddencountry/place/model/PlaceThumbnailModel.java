@@ -20,7 +20,7 @@ public class PlaceThumbnailModel {
 
 	Long id;
 	String firstImage;
-	Long contendId;
+	Long contentId;
 	float reviewScoreAverage;
 	Long reviewCount;
 	String addr1;
@@ -42,7 +42,7 @@ public class PlaceThumbnailModel {
 		return PlaceThumbnailModel.builder()
 			.id(place.getId())
 			.firstImage(place.getFirstImage())
-			.contendId(place.getContentId())
+			.contentId(place.getContentId())
 			.addr1(place.getAddr1())
 			.reviewScoreAverage(place.getReviewScoreAverage())
 			.reviewCount(place.getReviewCount())
@@ -67,7 +67,7 @@ public class PlaceThumbnailModel {
 		return PlaceThumbnailModel.builder()
 			.id(place.getId())
 			.firstImage(place.getFirstImage())
-			.contendId(place.getContentId())
+			.contentId(place.getContentId())
 			.addr1(place.getAddr1())
 			.reviewScoreAverage(place.getReviewScoreAverage())
 			.reviewCount(place.getReviewCount())
