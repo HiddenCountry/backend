@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.example.hiddencountry.place.domain.Place;
+import com.example.hiddencountry.place.domain.type.ContentType;
 import com.example.hiddencountry.place.domain.type.Season;
 
 import lombok.AllArgsConstructor;
@@ -27,6 +28,8 @@ public class PlaceThumbnailModel {
 	List<String> hashtags;
 	Boolean isBookmarked;
 	String title;
+	ContentType contentTypeName;
+	int contentTypeId;
 
 	public static PlaceThumbnailModel toPlaceThumbnailModel(Place place,Boolean isBookmarked){
 		List<String> hashtags = new ArrayList<>();
@@ -46,7 +49,10 @@ public class PlaceThumbnailModel {
 			.season(place.getRSeason())
 			.hashtags(hashtags)
 			.title(place.getTitle())
-			.isBookmarked(isBookmarked).build();
+			.isBookmarked(isBookmarked)
+			.contentTypeName(place.getContentType())
+			.contentTypeId(place.getContentType().getCode())
+			.build();
 	}
 
 	public static PlaceThumbnailModel toPlaceThumbnailModel(PlaceDistanceModel p,Boolean isBookmarked) {
@@ -68,6 +74,8 @@ public class PlaceThumbnailModel {
 			.season(place.getRSeason())
 			.hashtags(hashtags)
 			.title(place.getTitle())
+			.contentTypeName(place.getContentType())
+			.contentTypeId(place.getContentType().getCode())
 			.isBookmarked(isBookmarked)
 			.build();
 	}
