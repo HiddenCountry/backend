@@ -68,27 +68,25 @@ public class PlaceController {
 
 
 	@Operation(
-		summary = "장소 상세정보 API",
-		description = ""
+		summary = "이색 관광지, 근처 관광지 상세정보 API",
+		description = "id == null -> 근처 관광지 상세페이지 <br> id != null -> 이국적 관광지 상세페이지"
 	)
 	@ResponseStatus(HttpStatus.OK)
 	@GetMapping("/place")
 	public ApiResponse<PlaceDetailInfoModel> getPlace(
-		//@RequestParam Long contentId,
-		@RequestParam Long id,
+		@RequestParam(required = true) @Parameter(description = "contentId", required = false , example = "900729") Long contentId,
+		@RequestParam(required = true) @Parameter(description = "contentTypeId", required = false , example = "32") Integer contentTypeId,
+		@RequestParam(required = false) @Parameter(description = "인근 관광지일 경우 null", required = false , example = "8") Long id,
 		@RequestParam(required = false) @Parameter(description = "위도", required = false , example = "37.5547") Double latitude,
 		@RequestParam(required = false) @Parameter(description = "경도", required = false , example = "126.9707") Double longitude,
 		@Parameter(hidden = true) @HiddenCountryUser User user
 	) {
 		return ApiResponse.onSuccess(
 			SuccessStatus.OK,
-			placeService.getPlaceDetailInfo(user,id,latitude,longitude)
+			placeService.getPlaceDetailInfo(user,id,contentId,contentTypeId,latitude,longitude)
 		);
 	}
 
-	// 인근 관광지
-
-	// 일반 관광지 상세정보
 
 
 }

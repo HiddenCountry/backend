@@ -1,6 +1,7 @@
 package com.example.hiddencountry.place.service;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -9,12 +10,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.example.hiddencountry.global.pagination.PaginationModel;
+import com.example.hiddencountry.place.domain.Location;
 import com.example.hiddencountry.place.domain.Place;
 import com.example.hiddencountry.place.domain.type.AreaCode;
 import com.example.hiddencountry.place.domain.type.ContentType;
 import com.example.hiddencountry.place.domain.type.CountryRegion;
 import com.example.hiddencountry.place.domain.type.Season;
 import com.example.hiddencountry.place.domain.type.SortType;
+import com.example.hiddencountry.place.model.DetailCommon2Model;
 import com.example.hiddencountry.place.model.InfoItemModel;
 import com.example.hiddencountry.place.model.PlaceDetailInfoModel;
 import com.example.hiddencountry.place.model.PlaceDistanceModel;
@@ -35,7 +38,6 @@ public class PlaceService {
 	private final CommonPlaceService commonPlaceService;
 	private final KorApiService korApiService;
 
-	///  todo : 해시태그
 	public PaginationModel<PlaceThumbnailModel> getPlaceThumbnailsWithSorting(
 		User user,
 		Integer page,
@@ -76,27 +78,66 @@ public class PlaceService {
 		}
 	}
 
-	public PlaceDetailInfoModel getPlaceDetailInfo(User user,Long id,Double latitude,Double longitude){
-		Place place = commonPlaceService.findById(id);
+	public PlaceDetailInfoModel getPlaceDetailInfo(
+		User user,
+		Long id,
+		Long contentId,
+		Integer contentType,
+		Double latitude,
+		Double longitude
+	) {
+		// 1. API 호출
+		List<InfoItemModel> infoItemList = korApiService.getDetailIntro(contentId, contentType).block();
+		DetailCommon2Model detail = korApiService.getDetailOverview2(contentId);
+		Objects.requireNonNull(infoItemList).add(0, new InfoItemModel("개요", detail.getOverview()));
 
-		List<InfoItemModel> infoItemModelList = korApiService.getDetailIntro(place.getContentId(),place.getContentType().getCode()).block();
-		String overview = korApiService.getDetailOverview(place.getContentId());
+		// 2. 위치 정보 파싱
+		Double lat = parseDoubleSafe(detail.getMapy());
+		Double lon = parseDoubleSafe(detail.getMapx());
 
-		infoItemModelList.add(0, new InfoItemModel("개요", overview));
+		// 4. DB 값은 선택적
+		Float reviewScoreAverage = null;
+		Boolean isBookmarked = null;
+		Boolean isExoticPlace = id != null;
+		if (id != null) {
+			Place place = commonPlaceService.findById(id);
+			reviewScoreAverage = place.getReviewScoreAverage();
+			isBookmarked = commonPlaceService.isBookmarked(user, place);
+		}
 
-		return PlaceDetailInfoModel.builder()
-			.id(id)
-			.title(place.getTitle())
-			.reviewScoreAverage(place.getReviewScoreAverage())
-			.address(place.getAddr1())
-			.contentTypeKoreanName(place.getContentType().getName())
-			.distance(place.getLocation().distanceTo(latitude,longitude))
-			.infoItemList(infoItemModelList)
-			.latitude(place.getLocation().getMapx())
-			.longitude(place.getLocation().getMapy())
-			.isBookmarked(commonPlaceService.isBookmarked(user,place))
-			.build();
+		// 5. 모델 생성
+		return PlaceDetailInfoModel.of(
+			id,
+			detail.getTitle(),
+			reviewScoreAverage,
+			detail.getAddr1(),
+			ContentType.fromCode(parseIntSafe(detail.getContenttypeid())).getName(),
+			infoItemList,
+			lat,
+			lon,
+			latitude,
+			longitude,
+			isBookmarked,
+			isExoticPlace
+		);
 	}
+
+	private Double parseDoubleSafe(String s) {
+		try {
+			return s != null ? Double.parseDouble(s) : null;
+		} catch (NumberFormatException e) {
+			return null;
+		}
+	}
+
+	private Integer parseIntSafe(String s) {
+		try {
+			return s != null ? Integer.parseInt(s) : null;
+		} catch (NumberFormatException e) {
+			return null;
+		}
+	}
+
 
 
 
