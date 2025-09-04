@@ -12,6 +12,8 @@ public class SecurityConstants {
     public static final List<String> ALLOW_URLS = List.of(
             "/login/page",
             "/callback",
+            "/error",
+            "/actuator/**",
             "/place",
             "/swagger-ui.html",
             "/swagger-ui/**",

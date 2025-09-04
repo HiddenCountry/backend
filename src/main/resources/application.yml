@@ -23,7 +23,14 @@ jwt:
 
 kakao:
   client_id: ${REST_API_KEY}
-  redirect_uri: http://localhost:8080/callback
+  redirect_uri: ${KAKAO_REDIRECT_URI}
 
 tour-api:
-  secret-key: ${TOUR_API_SECRET_KEY}
+  secret-key: ${TOUR_API_SECRET_KEY}  
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
