@@ -1,5 +1,7 @@
 package com.example.hiddencountry.global.exception;
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.SdkClientException;
 import com.example.hiddencountry.global.model.ApiResponse;
 import com.example.hiddencountry.global.status.ErrorStatus;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
@@ -20,6 +22,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+
+import java.io.IOException;
 
 
 @Slf4j
@@ -76,6 +80,23 @@ public class ExceptionAdvice {
     @ExceptionHandler({HttpRequestMethodNotSupportedException.class})
     public ResponseEntity<ApiResponse<ErrorStatus>> httpRequestMethodNotSupportedException(HttpServletRequest req, Exception e) {
         return handle(req,ErrorStatus.METHOD_NOT_ALLOWED);
+    }
+
+    @ExceptionHandler({
+            IOException.class,
+    })
+    public ResponseEntity<ApiResponse<ErrorStatus>> handleIOException(HttpServletRequest req, IOException e) {
+        log.warn("I/O error on {} {} : {}", req.getMethod(), req.getRequestURI(), e.toString());
+        return handle(req, ErrorStatus.FILE_IO_ERROR);
+    }
+
+    @ExceptionHandler({
+            AmazonServiceException.class,
+            SdkClientException.class
+    })
+    public ResponseEntity<ApiResponse<ErrorStatus>> handleAwsSdk(HttpServletRequest req, Exception e) {
+        log.warn("AWS SDK error on {} {} : {}", req.getMethod(), req.getRequestURI(), e.toString());
+        return handle(req, ErrorStatus.S3_UPLOAD_ERROR);
     }
 
     @ExceptionHandler({ServiceException.class})
