@@ -3,7 +3,9 @@ package com.example.hiddencountry.review.controller;
 import com.example.hiddencountry.global.annotation.HiddenCountryUser;
 import com.example.hiddencountry.global.model.ApiResponse;
 import com.example.hiddencountry.global.status.SuccessStatus;
+import com.example.hiddencountry.review.model.ReviewSort;
 import com.example.hiddencountry.review.model.request.ReviewRequest;
+import com.example.hiddencountry.review.model.response.ReviewListResponse;
 import com.example.hiddencountry.review.model.response.ReviewResponse;
 import com.example.hiddencountry.review.service.ReviewService;
 import com.example.hiddencountry.user.domain.User;
@@ -58,5 +60,29 @@ public class ReviewController {
         return ApiResponse.onSuccess(
                 SuccessStatus.REVIEW_CREATE_SUCCESS,
                 reviewService.createReview(user, placeId, request, images));
+    }
+
+    @Operation(summary = "리뷰 목록 조회 API",
+               description = """ 
+  커서(키셋) 기반 무한스크롤 조회입니다.
+  - `LATEST`  : id DESC (최신순)
+  - `RATING_DESC`: score DESC, id DESC (평점 높은 순)
+  
+  - LATEST      : 다음 페이지 요청 시 `cursorId` = 이전 응답의 `nextId`
+  - RATING_DESC : 다음 페이지 요청 시 `cursorScore` = 이전 응답의 `nextScore`, `cursorId` = 이전 응답의 `nextId`
+""")
+    @GetMapping
+    public ApiResponse<ReviewListResponse> list(
+            @PathVariable("placeId") Long placeId,
+            @RequestParam(defaultValue = "LATEST") ReviewSort sort,
+            @RequestParam(required = false) Long cursorId,
+            @RequestParam(required = false) Integer cursorScore,
+            @RequestParam(defaultValue = "10") int size,
+            @Parameter(hidden = true) @HiddenCountryUser User user
+    ) {
+        return ApiResponse.onSuccess(
+                SuccessStatus.OK,
+                reviewService.getReviews(placeId, sort, cursorId, cursorScore, size)
+        );
     }
 }
