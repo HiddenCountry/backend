@@ -20,25 +20,73 @@ import com.example.hiddencountry.place.model.PlaceDistanceModel;
 @Repository
 public interface PlaceRepository extends JpaRepository<Place, Long> {
 
+	// @Query("""
+	// 	SELECT p
+	// 	FROM Place p
+	// 	WHERE (:areaCode IS NULL OR p.areaCode = :areaCode)
+	// 	AND p.id in (
+	// 			select pc.id.placeId FROM PlaceCountry pc where pc.id.countryRegion = :countryRegion
+	// 	)
+	// 	AND (:contentType IS NULL OR p.contentType = :contentType)
+	// 	AND (:season IS NULL OR p.rSeason = :season)
+    // """)
+	// Page<Place> findFiltered(
+	// 	@Param("areaCode") AreaCode areaCode,
+	// 	@Param("contentType") ContentType contentType,
+	// 	@Param("season") Season season,
+	// 	@Param("countryRegion") CountryRegion countryRegion,
+	// 	Pageable pageable
+	// );
 	@Query("""
-		SELECT p
-		FROM Place p
-		WHERE (:areaCode IS NULL OR p.areaCode = :areaCode)
-		AND p.id in (
-				select pc.id.placeId FROM PlaceCountry pc where pc.id.countryRegion = :countryRegion
-		)
-		AND (:contentType IS NULL OR p.contentType = :contentType)
-		AND (:season IS NULL OR p.rSeason = :season)
-    """)
+    SELECT p
+    FROM Place p
+    WHERE p.id IN (
+        SELECT pc.id.placeId 
+        FROM PlaceCountry pc 
+        WHERE pc.id.countryRegion = :countryRegion
+    )
+    AND (:areaCodes IS NULL OR p.areaCode IN :areaCodes)
+    AND (:contentTypes IS NULL OR p.contentType IN :contentTypes)
+    AND (:seasons IS NULL OR p.rSeason IN :seasons)
+""")
 	Page<Place> findFiltered(
-		@Param("areaCode") AreaCode areaCode,
-		@Param("contentType") ContentType contentType,
-		@Param("season") Season season,
+		@Param("areaCodes") List<AreaCode> areaCodes,
+		@Param("contentTypes") List<ContentType> contentTypes,
+		@Param("seasons") List<Season> seasons,
 		@Param("countryRegion") CountryRegion countryRegion,
 		Pageable pageable
 	);
 
-	@Query("""
+// 	@Query("""
+//     SELECT new com.example.hiddencountry.place.model.PlaceDistanceModel(
+//         p,
+//         CAST(
+//           (6371 * acos(
+//             cos(radians(:currLat)) * cos(radians(p.location.mapy)) *
+//             cos(radians(p.location.mapx) - radians(:currLng)) +
+//             sin(radians(:currLat)) * sin(radians(p.location.mapy))
+//           ))
+//         AS Double)
+//     )
+//     FROM Place p
+//     WHERE (:areaCode IS NULL OR p.areaCode = :areaCode)
+//       AND (:contentType IS NULL OR p.contentType = :contentType)
+//       AND (:season IS NULL OR p.rSeason = :season)
+//       AND p.id IN (
+//           SELECT pc.id.placeId FROM PlaceCountry pc WHERE pc.id.countryRegion = :countryRegion
+//       )
+//     ORDER BY 2 ASC
+// """)
+// 	Page<PlaceDistanceModel> findFilteredByDistance(
+// 			@Param("currLat") double currLat,
+// 			@Param("currLng") double currLng,
+// 			@Param("areaCode") AreaCode areaCode,
+// 			@Param("contentType") ContentType contentType,
+// 			@Param("season") Season season,
+// 			@Param("countryRegion") CountryRegion countryRegion,
+// 			Pageable pageable
+// 	);
+@Query("""
     SELECT new com.example.hiddencountry.place.model.PlaceDistanceModel(
         p,
         CAST(
@@ -50,40 +98,59 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
         AS Double)
     )
     FROM Place p
-    WHERE (:areaCode IS NULL OR p.areaCode = :areaCode)
-      AND (:contentType IS NULL OR p.contentType = :contentType)
-      AND (:season IS NULL OR p.rSeason = :season)
+    WHERE (:areaCodes IS NULL OR p.areaCode IN :areaCodes)
+    AND (:contentTypes IS NULL OR p.contentType IN :contentTypes)
+    AND (:seasons IS NULL OR p.rSeason IN :seasons)
       AND p.id IN (
           SELECT pc.id.placeId FROM PlaceCountry pc WHERE pc.id.countryRegion = :countryRegion
       )
     ORDER BY 2 ASC
 """)
-	Page<PlaceDistanceModel> findFilteredByDistance(
-			@Param("currLat") double currLat,
-			@Param("currLng") double currLng,
-			@Param("areaCode") AreaCode areaCode,
-			@Param("contentType") ContentType contentType,
-			@Param("season") Season season,
-			@Param("countryRegion") CountryRegion countryRegion,
-			Pageable pageable
-	);
+Page<PlaceDistanceModel> findFilteredByDistance(
+	@Param("currLat") double currLat,
+	@Param("currLng") double currLng,
+	@Param("areaCodes") List<AreaCode> areaCodes,
+	@Param("contentTypes") List<ContentType> contentTypes,
+	@Param("seasons") List<Season> seasons,
+	@Param("countryRegion") CountryRegion countryRegion,
+	Pageable pageable
+);
 
+	// @Query("""
+    // SELECT p
+    // FROM Place p
+    // WHERE (:areaCode IS NULL OR p.areaCode = :areaCode)
+    //   AND (:title IS NULL OR p.title LIKE %:title%)
+    //   AND p.id IN (
+    //       SELECT pc.id.placeId FROM PlaceCountry pc WHERE pc.id.countryRegion = :countryRegion
+    //   )
+    //   AND (:contentType IS NULL OR p.contentType = :contentType)
+    //   AND (:season IS NULL OR p.rSeason = :season)
+	// """)
+	// Page<Place> searchAndNotDistance(
+	// 	@Param("areaCode") AreaCode areaCode,
+	// 	@Param("title") String title,
+	// 	@Param("contentType") ContentType contentType,
+	// 	@Param("season") Season season,
+	// 	@Param("countryRegion") CountryRegion countryRegion,
+	// 	Pageable pageable
+	// );
 	@Query("""
     SELECT p
     FROM Place p
-    WHERE (:areaCode IS NULL OR p.areaCode = :areaCode)
-      AND (:title IS NULL OR p.title LIKE %:title%)
+    WHERE (:title IS NULL OR p.title LIKE %:title%)
       AND p.id IN (
           SELECT pc.id.placeId FROM PlaceCountry pc WHERE pc.id.countryRegion = :countryRegion
       )
-      AND (:contentType IS NULL OR p.contentType = :contentType)
-      AND (:season IS NULL OR p.rSeason = :season)
+       AND (:areaCodes IS NULL OR p.areaCode IN :areaCodes)
+	   AND (:contentTypes IS NULL OR p.contentType IN :contentTypes)
+	   AND (:seasons IS NULL OR p.rSeason IN :seasons)
 	""")
 	Page<Place> searchAndNotDistance(
-		@Param("areaCode") AreaCode areaCode,
+		@Param("areaCodes") List<AreaCode> areaCodes,
 		@Param("title") String title,
-		@Param("contentType") ContentType contentType,
-		@Param("season") Season season,
+		@Param("contentTypes") List<ContentType> contentTypes,
+		@Param("seasons") List<Season> seasons,
 		@Param("countryRegion") CountryRegion countryRegion,
 		Pageable pageable
 	);
@@ -100,10 +167,10 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
         AS Double)
     )
     FROM Place p
-    WHERE (:areaCode IS NULL OR p.areaCode = :areaCode)
-      AND (:title IS NULL OR p.title LIKE %:title%)
-      AND (:contentType IS NULL OR p.contentType = :contentType)
-      AND (:season IS NULL OR p.rSeason = :season)
+    WHERE (:title IS NULL OR p.title LIKE %:title%)
+	AND (:areaCodes IS NULL OR p.areaCode IN :areaCodes)
+    AND (:contentTypes IS NULL OR p.contentType IN :contentTypes)
+    AND (:seasons IS NULL OR p.rSeason IN :seasons)
       AND p.id IN (
           SELECT pc.id.placeId FROM PlaceCountry pc WHERE pc.id.countryRegion = :countryRegion
       )
@@ -112,10 +179,10 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
 	Page<PlaceDistanceModel> searchAndDistance(
 		@Param("currLat") double currLat,
 		@Param("currLng") double currLng,
-		@Param("areaCode") AreaCode areaCode,
+		@Param("areaCodes") List<AreaCode> areaCodes,
 		@Param("title") String title,
-		@Param("contentType") ContentType contentType,
-		@Param("season") Season season,
+		@Param("contentTypes") List<ContentType> contentTypes,
+		@Param("seasons") List<Season> seasons,
 		@Param("countryRegion") CountryRegion countryRegion,
 		Pageable pageable
 	);

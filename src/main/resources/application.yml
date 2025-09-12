@@ -25,6 +25,9 @@ kakao:
   client_id: ${REST_API_KEY}
   redirect_uri: ${KAKAO_REDIRECT_URI}
 
+tour-api:
+  secret-key: ${TOUR_API_SECRET_KEY}
+
 management:
   endpoints:
     web:
@@ -42,3 +45,4 @@ cloud:
     credentials:
       accessKey: ${AWS_ACCESS_KEY_ID}
       secretKey: ${AWS_SECRET_ACCESS_KEY}
+

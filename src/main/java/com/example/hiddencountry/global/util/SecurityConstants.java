@@ -17,6 +17,7 @@ public class SecurityConstants {
             "/place",
             "/swagger-ui.html",
             "/swagger-ui/**",
-            "/v3/api-docs/**"
+            "/v3/api-docs/**",
+            "/places"
     );
 }
