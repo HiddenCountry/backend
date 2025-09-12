@@ -1,5 +1,6 @@
 package com.example.hiddencountry.review.domain;
 
+import com.example.hiddencountry.global.base.BaseEntity;
 import com.example.hiddencountry.review.domain.type.Tag;
 
 import jakarta.persistence.Column;
@@ -25,7 +26,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "review_tag")
 @AllArgsConstructor
 @NoArgsConstructor
-public class ReviewTag {
+public class ReviewTag extends BaseEntity {
 
 	@Id
 	@Column(name = "id", nullable = false)

@@ -2,6 +2,8 @@ package com.example.hiddencountry.review.domain;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import com.example.hiddencountry.global.base.BaseEntity;
 import com.example.hiddencountry.place.domain.Place;
 import com.example.hiddencountry.user.domain.User;
 
@@ -30,7 +32,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "review")
 @AllArgsConstructor
 @NoArgsConstructor
-public class Review {
+public class Review extends BaseEntity {
 
 	@Id
 	@Column(name = "id", nullable = false)

@@ -1,5 +1,6 @@
 package com.example.hiddencountry.review.domain;
 
+import com.example.hiddencountry.global.base.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -21,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "review_image")
 @AllArgsConstructor
 @NoArgsConstructor
-public class ReviewImage {
+public class ReviewImage extends BaseEntity {
 
 	@Id
 	@Column(name = "id", nullable = false)
