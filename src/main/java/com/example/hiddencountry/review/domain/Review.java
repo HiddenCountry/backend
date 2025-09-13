@@ -2,6 +2,8 @@ package com.example.hiddencountry.review.domain;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import com.example.hiddencountry.global.base.BaseEntity;
 import com.example.hiddencountry.place.domain.Place;
 import com.example.hiddencountry.user.domain.User;
 
@@ -23,6 +25,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 @Getter
 @Builder
@@ -30,7 +34,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "review")
 @AllArgsConstructor
 @NoArgsConstructor
-public class Review {
+public class Review extends BaseEntity {
 
 	@Id
 	@Column(name = "id", nullable = false)
@@ -60,6 +64,7 @@ public class Review {
 
 	@Builder.Default
 	@OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+	@Fetch(FetchMode.SUBSELECT)
 	private List<ReviewTag> tags = new ArrayList<>();
 
 
