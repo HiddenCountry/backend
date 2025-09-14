@@ -39,4 +39,13 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             @Param("id") Long id,
             Pageable pageable
     );
+
+    @Query("""
+    select coalesce(avg(r.score), 0)
+    from Review r
+    where r.place.id = :placeId and r.score is not null
+""")
+    Double avgScoreByPlaceId(@Param("placeId") Long placeId);
+
+    long countByPlace_Id(Long placeId);
 }

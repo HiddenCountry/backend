@@ -14,6 +14,7 @@ import com.example.hiddencountry.review.model.ReviewSort;
 import com.example.hiddencountry.review.model.request.ReviewRequest;
 import com.example.hiddencountry.review.model.response.ReviewListResponse;
 import com.example.hiddencountry.review.model.response.ReviewResponse;
+import com.example.hiddencountry.review.repository.ReviewTagRepository;
 import com.example.hiddencountry.user.domain.User;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -40,6 +41,7 @@ import static org.springframework.data.domain.Sort.Direction.DESC;
 public class ReviewService {
 
 	private final ReviewRepository reviewRepository;
+	private final ReviewTagRepository reviewTagRepository;
 	private final PlaceRepository placeRepository;
 	private final S3Uploader s3Uploader;
 
@@ -71,6 +73,8 @@ public class ReviewService {
 				);
 			}
 		}
+
+		updateReviewStats(placeId);
 
 		return ReviewResponse.from(saved);
 	}
@@ -120,4 +124,23 @@ public class ReviewService {
 				.nextScore(nextScore)
 				.build();
     }
+
+	/**
+	 * 해당 장소의 리뷰 개수, 평점 평균, top 해시태그(2개)를 Place 엔티티에 반영한다.
+	 * @param placeId 장소 Id
+	 */
+	@Transactional
+	public void updateReviewStats(Long placeId) {
+		var count = reviewRepository.countByPlace_Id(placeId);
+		var avg   = reviewRepository.avgScoreByPlaceId(placeId);
+		float average = avg != null ? avg.floatValue() : 0f;
+
+		var topTags = reviewTagRepository.findTopTagValuesByPlace(placeId, PageRequest.of(0, 2));
+		Tag top1 = topTags.size() > 0 ? topTags.get(0) : null;
+		Tag top2 = topTags.size() > 1 ? topTags.get(1) : null;
+
+		var place = placeRepository.findById(placeId).orElseThrow();
+		place.changeReviewStats(count, average);
+		place.changeTopHashtags(top1, top2);
+	}
 }
