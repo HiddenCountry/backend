@@ -15,6 +15,8 @@ public enum SuccessStatus{
     USER_KAKAO_LOGIN_SUCCESS(HttpStatus.OK, "USER_KAKAO_LOGIN_SUCCESS", "로그인에 성공하였습니다."),
     UPDATE_NICKNAME_SUCCESS(HttpStatus.OK, "UPDATE_NICKNAME_SUCCESS", "닉네임 변경에 성공하였습니다."),
 
+    PLACE_REQUEST_SUCCESS(HttpStatus.CREATED, "PLACE_REQUEST_SUCCESS", "장소 요청에 성공하였습니다."),
+  
     // 리뷰 관련 응답
     REVIEW_CREATE_SUCCESS(HttpStatus.CREATED, "REVIEW_CREATE_SUCCESS", "리뷰가 등록되었습니다.");
 
