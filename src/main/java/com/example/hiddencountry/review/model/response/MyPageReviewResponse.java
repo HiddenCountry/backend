@@ -7,6 +7,7 @@ public record MyPageReviewResponse(
         Long id,
         Long placeId,
         String placeTitle,
+        String placeAddress,
         String content,
         Integer score,
         String placeImageUrl
@@ -16,6 +17,7 @@ public record MyPageReviewResponse(
                 review.getId(),
                 review.getPlace().getId(),
                 review.getPlace().getTitle(),
+                review.getPlace().getAddr1(),
                 review.getContent(),
                 review.getScore(),
                 review.getImages().stream().map(ReviewImage::getUrl).findFirst().orElse(null)
