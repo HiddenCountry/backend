@@ -1,5 +1,6 @@
 package com.example.hiddencountry.place.service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -99,11 +100,21 @@ public class PlaceService {
 		Float reviewScoreAverage = null;
 		Boolean isBookmarked = null;
 		Boolean isExoticPlace = id != null;
+		List<String> countryNames;
+
 		if (id != null) {
 			Place place = commonPlaceService.findById(id);
 			reviewScoreAverage = place.getReviewScoreAverage();
 			isBookmarked = commonPlaceService.isBookmarked(user, place);
+			countryNames = place.getPlaceCountries()
+				.stream()
+				.map(country -> country.getId().getCountryRegion().getDisplayName())
+				.toList();
+		} else {
+			countryNames = Collections.emptyList();
 		}
+
+
 
 		// 5. 모델 생성
 		return PlaceDetailInfoModel.of(
@@ -112,6 +123,7 @@ public class PlaceService {
 			reviewScoreAverage,
 			detail.getAddr1(),
 			ContentType.fromCode(parseIntSafe(detail.getContenttypeid())).getName(),
+			countryNames,
 			infoItemList,
 			lat,
 			lon,
