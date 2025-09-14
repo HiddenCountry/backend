@@ -31,7 +31,11 @@ public enum ErrorStatus {
     DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "USER_DUPLICATE_NICKNAME","중복된 닉네임입니다."),
 
     // Place Error
-    PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "PLACE_NOT_FOUND","Place not found");
+    PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "PLACE_NOT_FOUND","Place not found"),
+
+    // S3 Error
+    FILE_IO_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "IO500", "파일 입출력 중 오류가 발생했습니다."),
+    S3_UPLOAD_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "S3500","S3 업로드 중 오류가 발생했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

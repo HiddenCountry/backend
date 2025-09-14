@@ -26,11 +26,23 @@ kakao:
   redirect_uri: ${KAKAO_REDIRECT_URI}
 
 tour-api:
-  secret-key: ${TOUR_API_SECRET_KEY}  
+  secret-key: ${TOUR_API_SECRET_KEY}
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info
+
+cloud:
+  aws:
+    s3:
+      bucket: hiddencountry
+    region:
+      static: ap-northeast-2
+    stack:
+      auto: false
+    credentials:
+      accessKey: ${AWS_ACCESS_KEY_ID}
+      secretKey: ${AWS_SECRET_ACCESS_KEY}
 
