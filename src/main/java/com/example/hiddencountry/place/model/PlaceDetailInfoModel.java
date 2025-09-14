@@ -19,6 +19,7 @@ public class PlaceDetailInfoModel {
 	Float reviewScoreAverage;
 	String address;
 	String contentTypeKoreanName;
+	List<String> countryKoreanNames;
 	Long distance;
 	List<InfoItemModel> infoItemList;
 	Double latitude;
@@ -35,6 +36,7 @@ public class PlaceDetailInfoModel {
 		Float reviewScoreAverage,
 		String address,
 		String contentTypeKoreanName,
+		List<String> countryKoreanNames,
 		List<InfoItemModel> infoItemList,
 		Double latitude,
 		Double longitude,
@@ -56,6 +58,7 @@ public class PlaceDetailInfoModel {
 			.contentTypeKoreanName(contentTypeKoreanName)
 			.distance(distance)
 			.infoItemList(infoItemList)
+			.countryKoreanNames(countryKoreanNames)
 			.latitude(latitude)
 			.longitude(longitude)
 			.isBookmarked(isBookmarked)
