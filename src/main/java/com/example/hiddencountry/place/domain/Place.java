@@ -117,6 +117,11 @@ public class Place {
 		this.topHashtag2 = top2;
 	}
 
+	public void changeReviewStats(long count, float average) {
+		this.reviewCount = count;
+		this.reviewScoreAverage = average;
+	}
+
 	public void addPlaceCountries(CountryRegion... regions) {
 		if (this.placeCountries == null) {
 			this.placeCountries = new ArrayList<>();

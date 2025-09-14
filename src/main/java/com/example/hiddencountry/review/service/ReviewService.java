@@ -4,6 +4,7 @@ import com.example.hiddencountry.global.status.ErrorStatus;
 import com.example.hiddencountry.global.storage.S3Uploader;
 import com.example.hiddencountry.place.domain.Place;
 import com.example.hiddencountry.place.domain.UserPlace;
+import com.example.hiddencountry.place.model.PlaceThumbnailModel;
 import com.example.hiddencountry.place.repository.PlaceRepository;
 import com.example.hiddencountry.review.converter.ReviewConverter;
 import com.example.hiddencountry.review.domain.Review;
@@ -12,15 +13,16 @@ import com.example.hiddencountry.review.domain.ReviewTag;
 import com.example.hiddencountry.review.domain.type.Tag;
 import com.example.hiddencountry.review.model.ReviewSort;
 import com.example.hiddencountry.review.model.request.ReviewRequest;
+import com.example.hiddencountry.review.model.response.MyPageReviewListResponse;
+import com.example.hiddencountry.review.model.response.MyPageReviewResponse;
 import com.example.hiddencountry.review.model.response.ReviewListResponse;
 import com.example.hiddencountry.review.model.response.ReviewResponse;
+import com.example.hiddencountry.review.repository.ReviewTagRepository;
 import com.example.hiddencountry.user.domain.User;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.Sort;
+import jakarta.validation.constraints.NotNull;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import com.example.hiddencountry.review.repository.ReviewRepository;
@@ -40,6 +42,7 @@ import static org.springframework.data.domain.Sort.Direction.DESC;
 public class ReviewService {
 
 	private final ReviewRepository reviewRepository;
+	private final ReviewTagRepository reviewTagRepository;
 	private final PlaceRepository placeRepository;
 	private final S3Uploader s3Uploader;
 
@@ -71,6 +74,8 @@ public class ReviewService {
 				);
 			}
 		}
+
+		updateReviewStats(placeId);
 
 		return ReviewResponse.from(saved);
 	}
@@ -120,4 +125,44 @@ public class ReviewService {
 				.nextScore(nextScore)
 				.build();
     }
+
+	/**
+	 * 해당 장소의 리뷰 개수, 평점 평균, top 해시태그(2개)를 Place 엔티티에 반영합니다
+	 * @param placeId 장소 Id
+	 */
+	@Transactional
+	public void updateReviewStats(Long placeId) {
+		long count = reviewRepository.countByPlace_Id(placeId);
+		Double avg   = reviewRepository.avgScoreByPlaceId(placeId);
+		float average = avg != null ? avg.floatValue() : 0f;
+
+		List<Tag> topTags = reviewTagRepository.findTopTagValuesByPlace(placeId, PageRequest.of(0, 2));
+		Tag top1 = topTags.size() > 0 ? topTags.get(0) : null;
+		Tag top2 = topTags.size() > 1 ? topTags.get(1) : null;
+
+		Place place = placeRepository.findById(placeId).orElseThrow();
+		place.changeReviewStats(count, average);
+		place.changeTopHashtags(top1, top2);
+	}
+
+	/**
+	 * 마이페이지에서 로그인한 사용자가 작성한 리뷰를 조회합니다
+	 * @param user 리뷰 작성자(로그인한 사용자)
+	 * @param page 페이지 번호
+	 * @param size 한 페이지 크기
+	 * @return 페이징된 리뷰 목록, 작성한 전체 리뷰 개수, 다음 페이지 존재 여부, 페이지 인덱스, 페이지 크기
+	 */
+	public MyPageReviewListResponse getUserReviews(User user, @NotNull Integer page, @NotNull Integer size) {
+		Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+
+		Page<Review> resultPage = reviewRepository.findByUser_IdOrderByIdDesc(user.getId(), pageable);
+
+		List<MyPageReviewResponse> items = resultPage.getContent().stream()
+				.map(MyPageReviewResponse::from)
+				.toList();
+
+		long total = resultPage.getTotalElements();
+
+		return new MyPageReviewListResponse(items, total, resultPage.hasNext(), page, size);
+	}
 }
