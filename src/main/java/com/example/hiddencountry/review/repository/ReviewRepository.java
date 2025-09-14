@@ -1,5 +1,6 @@
 package com.example.hiddencountry.review.repository;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -48,4 +49,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Double avgScoreByPlaceId(@Param("placeId") Long placeId);
 
     long countByPlace_Id(Long placeId);
+
+    Page<Review> findByUser_IdOrderByIdDesc(Long id, Pageable pageable);
 }

@@ -2,9 +2,12 @@ package com.example.hiddencountry.review.controller;
 
 import com.example.hiddencountry.global.annotation.HiddenCountryUser;
 import com.example.hiddencountry.global.model.ApiResponse;
+import com.example.hiddencountry.global.pagination.PaginationModel;
 import com.example.hiddencountry.global.status.SuccessStatus;
+import com.example.hiddencountry.place.model.PlaceThumbnailModel;
 import com.example.hiddencountry.review.model.ReviewSort;
 import com.example.hiddencountry.review.model.request.ReviewRequest;
+import com.example.hiddencountry.review.model.response.MyPageReviewListResponse;
 import com.example.hiddencountry.review.model.response.ReviewListResponse;
 import com.example.hiddencountry.review.model.response.ReviewResponse;
 import com.example.hiddencountry.review.service.ReviewService;
@@ -14,8 +17,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.media.*;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,7 +31,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/review/{placeId}")
+@RequestMapping("/review")
 public class ReviewController {
 
     private final ReviewService reviewService;
@@ -50,7 +55,7 @@ public class ReviewController {
                     }
             )
     )
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(path = "/{placeId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<ReviewResponse> create(
             @Parameter(hidden = true) @HiddenCountryUser User user,
             @PathVariable("placeId") Long placeId,
@@ -71,7 +76,7 @@ public class ReviewController {
   - LATEST      : 다음 페이지 요청 시 `cursorId` = 이전 응답의 `nextId`
   - RATING_DESC : 다음 페이지 요청 시 `cursorScore` = 이전 응답의 `nextScore`, `cursorId` = 이전 응답의 `nextId`
 """)
-    @GetMapping
+    @GetMapping("/{placeId}")
     public ApiResponse<ReviewListResponse> list(
             @PathVariable("placeId") Long placeId,
             @RequestParam(defaultValue = "LATEST") ReviewSort sort,
@@ -83,6 +88,23 @@ public class ReviewController {
         return ApiResponse.onSuccess(
                 SuccessStatus.OK,
                 reviewService.getReviews(placeId, sort, cursorId, cursorScore, size)
+        );
+    }
+
+    @Operation(
+            summary = "마이페이지 내가 작성한 리뷰 조회",
+            description = ""
+    )
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping("/mypage")
+    public ApiResponse<MyPageReviewListResponse> getUserReviews(
+            @Parameter(hidden = true) @HiddenCountryUser User user,
+            @RequestParam(defaultValue = "0") @NotNull @Parameter(description = "페이지 번호 - 0 부터 시작", required = true, example = "0") Integer page,
+            @RequestParam(defaultValue = "5") @NotNull @Parameter(description = "한 페이지 크기", required = true, example = "5") Integer size
+    ) {
+        return ApiResponse.onSuccess(
+                SuccessStatus.OK,
+                reviewService.getUserReviews(user, page, size)
         );
     }
 }
