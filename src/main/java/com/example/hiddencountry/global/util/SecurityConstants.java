@@ -3,7 +3,6 @@ package com.example.hiddencountry.global.util;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import java.util.List;
 
 @Getter
@@ -18,6 +17,7 @@ public class SecurityConstants {
             "/swagger-ui.html",
             "/swagger-ui/**",
             "/v3/api-docs/**",
-            "/places"
+            "/places",
+            "/places/map"
     );
 }

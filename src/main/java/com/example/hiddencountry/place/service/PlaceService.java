@@ -27,6 +27,7 @@ import com.example.hiddencountry.place.repository.PlaceRepository;
 import com.example.hiddencountry.place.service.module.CommonPlaceService;
 import com.example.hiddencountry.user.domain.User;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -48,35 +49,54 @@ public class PlaceService {
 		List<Season> season,
 		CountryRegion countryRegion,
 		SortType sortType,
-		Double latitude,
-		Double longitude,
+		Double userLatitude,
+		Double userLongitude,
 		String title
-	){
-		log.info("getThumbnailsByFilterAndSort called with page={}, size={}, areaCode={}, contentType={}, season={}, countryRegion={}, sortType={}, latitude={}, longitude={}, title='{}'",
-			page, size, areaCode, contentType, season, countryRegion, sortType, latitude, longitude, title);
-		if(sortType != SortType.DISTANCE_ASC){
-			Pageable pageable = PageRequest.of(page, size, Sort.by(sortType.getDirection(),sortType.getColumnName()));
+	) {
+		log.info(
+			"getThumbnailsByFilterAndSort called with page={}, size={}, areaCode={}, contentType={}, season={}, countryRegion={}, sortType={}, latitude={}, longitude={}, title='{}'",
+			page, size, areaCode, contentType, season, countryRegion, sortType, userLatitude, userLongitude, title);
+		if (sortType != SortType.DISTANCE_ASC) {
+			Pageable pageable = PageRequest.of(page, size, Sort.by(sortType.getDirection(), sortType.getColumnName()));
 
-			Page<Place> placePage = (title== null || !title.isBlank()) ?  placeRepository.searchAndNotDistance(areaCode,title, contentType, season, countryRegion, pageable) :
+			Page<Place> placePage = (title == null || !title.isBlank()) ?
+				placeRepository.searchAndNotDistance(areaCode, title, contentType, season, countryRegion, pageable) :
 				placeRepository.findFiltered(areaCode, contentType, season, countryRegion, pageable);
 			List<PlaceThumbnailModel> thumbnails = placePage.getContent().stream()
 				.map(place -> PlaceThumbnailModel.toPlaceThumbnailModel(
-					place,  commonPlaceService.isBookmarked(user,place)
+					place, commonPlaceService.isBookmarked(user, place), userLatitude,userLongitude
 				))
 				.toList();
-			return PaginationModel.toPaginationModel(thumbnails,placePage);
-		}
-		else{
+			return PaginationModel.toPaginationModel(thumbnails, placePage);
+		} else {
 			Pageable pageable = PageRequest.of(page, size);
 			Page<PlaceDistanceModel> placePage =
-				(title== null || !title.isBlank()) ?  placeRepository.searchAndDistance(latitude,longitude, areaCode,title, contentType, season, countryRegion, pageable):
-				placeRepository.findFilteredByDistance(latitude,longitude, areaCode, contentType, season, countryRegion, pageable);
+				(title == null || !title.isBlank()) ?
+					placeRepository.searchAndDistance(userLatitude, userLongitude, areaCode, title, contentType, season,
+						countryRegion, pageable) :
+					placeRepository.findFilteredByDistance(userLatitude, userLongitude, areaCode, contentType, season,
+						countryRegion, pageable);
 			List<PlaceThumbnailModel> thumbnails = placePage.getContent().stream()
-				.map(p -> PlaceThumbnailModel.toPlaceThumbnailModel(p,  // hashtags
-					commonPlaceService.isBookmarked(user,p.getPlace())))
+				.map(p -> PlaceThumbnailModel.toPlaceThumbnailModel(p.getPlace(),  // hashtags
+					commonPlaceService.isBookmarked(user, p.getPlace()), userLatitude, userLongitude))
 				.toList();
-			return PaginationModel.toPaginationModel(thumbnails,placePage);
+			return PaginationModel.toPaginationModel(thumbnails, placePage);
 		}
+	}
+
+	public List<PlaceThumbnailModel> getPlaceThumbnailsForMap(User user, List<ContentType> contentType,
+		List<CountryRegion> countryRegion, Double swLat, Double swLng, Double neLat, Double neLng,
+		Double userLatitude,
+		Double userLongitude) {
+		List<Place> places = placeRepository.findByMapBoundsAndContentTypeAndCountry(contentType, countryRegion, swLat,
+			swLng, neLat, neLng);
+
+		return places.stream()
+			.map(place -> PlaceThumbnailModel.toPlaceThumbnailModel(
+				place, commonPlaceService.isBookmarked(user, place), userLatitude, userLongitude
+			))
+			.toList();
+
 	}
 
 	public PlaceDetailInfoModel getPlaceDetailInfo(
@@ -114,8 +134,6 @@ public class PlaceService {
 			countryNames = Collections.emptyList();
 		}
 
-
-
 		// 5. 모델 생성
 		return PlaceDetailInfoModel.of(
 			id,
@@ -149,8 +167,5 @@ public class PlaceService {
 			return null;
 		}
 	}
-
-
-
 
 }
