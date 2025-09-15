@@ -187,4 +187,23 @@ Page<PlaceDistanceModel> findFilteredByDistance(
 		Pageable pageable
 	);
 
+	@Query("""
+    SELECT p
+    FROM Place p
+    WHERE (:contentType IS NULL OR p.contentType IN :contentType)
+      AND (:countryRegion IS NULL OR p.id IN (
+          SELECT pc.id.placeId FROM PlaceCountry pc WHERE pc.id.countryRegion IN :countryRegion
+      ))
+      AND p.location.mapy BETWEEN :swLat AND :neLat
+      AND p.location.mapx BETWEEN :swLng AND :neLng
+    ORDER BY p.title ASC
+	""")
+	List<Place> findByMapBoundsAndContentTypeAndCountry(
+		@Param("contentType") List<ContentType> contentType,
+		@Param("countryRegion") List<CountryRegion> countryRegion,
+		@Param("swLat") Double swLat,
+		@Param("swLng") Double swLng,
+		@Param("neLat") Double neLat,
+		@Param("neLng") Double neLng
+	);
 }
