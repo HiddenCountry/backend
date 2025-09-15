@@ -19,7 +19,6 @@ import com.example.hiddencountry.place.domain.type.SortType;
 import com.example.hiddencountry.place.model.PlaceDetailInfoModel;
 import com.example.hiddencountry.place.model.PlaceThumbnailModel;
 import com.example.hiddencountry.place.service.PlaceService;
-import com.example.hiddencountry.place.service.KorApiService;
 import com.example.hiddencountry.user.domain.User;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,11 +31,6 @@ import lombok.RequiredArgsConstructor;
 public class PlaceController {
 
 	private final PlaceService placeService;
-	private final KorApiService korApiService;
-
-	// 검색 아닐 때,
-	// filter : Cat1 , ContentType, Season
-	// sort : 리뷰 많은 순, 거리순, 조회순 , 평점 순
 
 	@Operation(
 		summary = "장소 리스트 API",
