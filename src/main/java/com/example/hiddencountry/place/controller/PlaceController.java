@@ -19,7 +19,6 @@ import com.example.hiddencountry.place.domain.type.SortType;
 import com.example.hiddencountry.place.model.PlaceDetailInfoModel;
 import com.example.hiddencountry.place.model.PlaceThumbnailModel;
 import com.example.hiddencountry.place.service.PlaceService;
-import com.example.hiddencountry.place.service.KorApiService;
 import com.example.hiddencountry.user.domain.User;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,11 +31,6 @@ import lombok.RequiredArgsConstructor;
 public class PlaceController {
 
 	private final PlaceService placeService;
-	private final KorApiService korApiService;
-
-	// 검색 아닐 때,
-	// filter : Cat1 , ContentType, Season
-	// sort : 리뷰 많은 순, 거리순, 조회순 , 평점 순
 
 	@Operation(
 		summary = "장소 리스트 API",
@@ -47,21 +41,46 @@ public class PlaceController {
 	public ApiResponse<PaginationModel<PlaceThumbnailModel>> getPlace(
 		@RequestParam @NotNull @Parameter(description = "페이지 번호 - 0 부터 시작", required = true, example = "0") Integer page,
 		@RequestParam @NotNull @Parameter(description = "한 페이지 크기", required = true, example = "9") Integer size,
-		@RequestParam(required = false) @Parameter(description = "지역", required = false, example = "SEOUL") List<AreaCode> areaCode,
-		@RequestParam(required = false) @Parameter(description = "관광 타입", required = false, example = "TOURIST_SPOT") List<ContentType> contentType,
-		@RequestParam(required = false) @Parameter(description = "계절", required = false, example = "ALL") List<Season> season,
+		@RequestParam(required = false) @Parameter(description = "지역(복수선택)", required = false, example = "SEOUL") List<AreaCode> areaCode,
+		@RequestParam(required = false) @Parameter(description = "관광 타입(복수선택)", required = false, example = "TOURIST_SPOT") List<ContentType> contentType,
+		@RequestParam(required = false) @Parameter(description = "계절(복수선택)", required = false, example = "ALL") List<Season> season,
 		@RequestParam @NotNull @Parameter(description = "나라", required = true, example = "NORTH_AMERICA") CountryRegion countryRegion,
 		@RequestParam @NotNull @Parameter(description = "정렬 방법", required = true, example = "REVIEW_COUNT_DESC") SortType sortType,
-		@RequestParam(required = false) @Parameter(description = "위도", required = false , example = "37.5547") Double latitude,
-		@RequestParam(required = false) @Parameter(description = "경도", required = false , example = "126.9707") Double longitude,
+		@RequestParam(required = false) @Parameter(description = "사용자 위도", required = false , example = "37.5547") Double userLat,
+		@RequestParam(required = false) @Parameter(description = "사용자 경도", required = false , example = "126.9707") Double userLng,
 		@RequestParam(required = false) @Parameter(description = "검색어 - 없어도 가능", required = false) String title,
 		@Parameter(hidden = true) @HiddenCountryUser User user
 	) {
 		return ApiResponse.onSuccess(
 			SuccessStatus.OK,
 			placeService.getPlaceThumbnailsWithSorting(
-			user,page,size,areaCode,contentType,season,countryRegion,sortType,latitude,longitude,title
+			user,page,size,areaCode,contentType,season,countryRegion,sortType,userLat,userLng,title
 		));
+	}
+
+	@Operation(
+		summary = "지도 API",
+		description = ""
+	)
+	@ResponseStatus(HttpStatus.OK)
+	@GetMapping("/places/map")
+	public ApiResponse<List<PlaceThumbnailModel>> getPlace(
+		@RequestParam(required = false) @Parameter(description = "관광 타입(복수 선택)", required = false, example = "TOURIST_SPOT") List<ContentType> contentTypes,
+		@RequestParam(required = false)  @Parameter(description = "나라(복수 선택)", required = false, example = "NORTH_AMERICA") List<CountryRegion> countryRegions,
+		@RequestParam(required = true) @Parameter(description = "남서쪽 위도", required = true, example = "37.5500") Double swLat,
+		@RequestParam(required = true) @Parameter(description = "남서쪽 경도", required = true, example = "126.9600") Double swLng,
+		@RequestParam(required = true) @Parameter(description = "북동쪽 위도", required = true, example = "37.5600") Double neLat,
+		@RequestParam(required = true) @Parameter(description = "북동쪽 경도", required = true, example = "126.9800") Double neLng,
+		@RequestParam(required = false) @Parameter(description = "사용자 위도", required = false , example = "37.5547") Double userLat,
+		@RequestParam(required = false) @Parameter(description = "사용자 경도", required = false , example = "126.9707") Double userLng,
+		@Parameter(hidden = true) @HiddenCountryUser User user
+	) {
+		return ApiResponse.onSuccess(
+			SuccessStatus.OK,
+			placeService.getPlaceThumbnailsForMap(
+				user,contentTypes,countryRegions,swLat,swLng,neLat,neLng,userLat,userLng
+			)
+		);
 	}
 
 
@@ -75,13 +94,13 @@ public class PlaceController {
 		@RequestParam(required = true) @Parameter(description = "contentId", required = false , example = "900729") Long contentId,
 		@RequestParam(required = true) @Parameter(description = "contentTypeId", required = false , example = "32") Integer contentTypeId,
 		@RequestParam(required = false) @Parameter(description = "인근 관광지일 경우 null", required = false , example = "8") Long id,
-		@RequestParam(required = false) @Parameter(description = "위도", required = false , example = "37.5547") Double latitude,
-		@RequestParam(required = false) @Parameter(description = "경도", required = false , example = "126.9707") Double longitude,
+		@RequestParam(required = false) @Parameter(description = "사용자 위도", required = false , example = "37.5547") Double userLat,
+		@RequestParam(required = false) @Parameter(description = "사용자 경도", required = false , example = "126.9707") Double userLng,
 		@Parameter(hidden = true) @HiddenCountryUser User user
 	) {
 		return ApiResponse.onSuccess(
 			SuccessStatus.OK,
-			placeService.getPlaceDetailInfo(user,id,contentId,contentTypeId,latitude,longitude)
+			placeService.getPlaceDetailInfo(user,id,contentId,contentTypeId,userLat,userLng)
 		);
 	}
 
