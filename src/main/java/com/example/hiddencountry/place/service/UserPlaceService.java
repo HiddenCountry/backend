@@ -68,7 +68,7 @@ public class UserPlaceService {
 		Page<UserPlace> userPlacePage = userPlaceRepository.findByUser(user, pageable);
 		List<PlaceThumbnailModel> placeThumbnailModelList = userPlacePage.getContent().stream()
 			.map(userPlace -> PlaceThumbnailModel.toPlaceThumbnailModel(
-				userPlace.getPlace(),  true
+				userPlace.getPlace(),  true,null,null
 			))
 			.toList();
 		return PaginationModel.toPaginationModel(placeThumbnailModelList,userPlacePage);
