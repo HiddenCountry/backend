@@ -12,6 +12,8 @@ import com.example.hiddencountry.place.model.InfoItemModel;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,18 +30,21 @@ public class KorApiService {
 	@Value("${tour-api.secret-key}")
 	private String serviceKey;
 
+	private String appName = URLEncoder.encode("숨은나라찾기", StandardCharsets.UTF_8);
+
+
 	public Mono<List<InfoItemModel>> getDetailIntro(Long contentId, Integer contentTypeId) {
 
-
 		String url = "http://apis.data.go.kr/B551011/KorService2/detailIntro2"
-			+ "?MobileOS=ETC"
-			+ "&MobileApp=AppTest"
+			+ "?MobileOS=WEB"
+			+ "&MobileApp=" + appName
 			+ "&serviceKey=" + serviceKey
 			+ "&_type=json"
 			+ "&contentId=" + contentId
 			+ "&contentTypeId=" + contentTypeId;
 
-		return WebClient.create(url).get()
+		return  WebClient
+			.create(url).get()
 			.uri(URI.create(url))
 			.retrieve()
 			.bodyToMono(JsonNode.class)
@@ -70,8 +75,8 @@ public class KorApiService {
 	}
 	public String getDetailOverview(Long contentId) {
 		String url = "http://apis.data.go.kr/B551011/KorService2/detailCommon2"
-			+ "?MobileOS=ETC"
-			+ "&MobileApp=AppTest"
+			+ "?MobileOS=WEB"
+			+ "&MobileApp=" + appName
 			+ "&serviceKey=" + serviceKey
 			+ "&_type=json"
 			+ "&contentId=" + contentId;
