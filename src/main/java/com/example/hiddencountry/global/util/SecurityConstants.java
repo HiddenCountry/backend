@@ -13,7 +13,6 @@ public class SecurityConstants {
             "/callback",
             "/error",
             "/actuator/**",
-            "/place",
             "/swagger-ui.html",
             "/swagger-ui/**",
             "/v3/api-docs/**"
@@ -22,6 +21,7 @@ public class SecurityConstants {
     /// 토큰이 있을 경우 인증 절차 진행하지만, 없을 경우에도 예외를 발생시키지는 않는 GET 메서드 URL
     public static final List<String> GET__METHOD_ALLOW_URLS = List.of(
         "/places",
-        "/places/map"
+        "/places/map",
+        "/place"
     );
 }
