@@ -17,6 +17,7 @@ import com.example.hiddencountry.review.model.response.MyPageReviewListResponse;
 import com.example.hiddencountry.review.model.response.MyPageReviewResponse;
 import com.example.hiddencountry.review.model.response.ReviewListResponse;
 import com.example.hiddencountry.review.model.response.ReviewResponse;
+import com.example.hiddencountry.review.repository.ReviewImageRepository;
 import com.example.hiddencountry.review.repository.ReviewTagRepository;
 import com.example.hiddencountry.user.domain.User;
 import jakarta.transaction.Transactional;
@@ -29,6 +30,7 @@ import com.example.hiddencountry.review.repository.ReviewRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -43,6 +45,7 @@ public class ReviewService {
 
 	private final ReviewRepository reviewRepository;
 	private final ReviewTagRepository reviewTagRepository;
+	private final ReviewImageRepository reviewImageRepository;
 	private final PlaceRepository placeRepository;
 	private final S3Uploader s3Uploader;
 
@@ -76,6 +79,7 @@ public class ReviewService {
 		}
 
 		updateReviewStats(placeId);
+		updateFirstImageIfNeeded(placeId);
 
 		return ReviewResponse.from(saved);
 	}
@@ -143,6 +147,43 @@ public class ReviewService {
 		Place place = placeRepository.findById(placeId).orElseThrow();
 		place.changeReviewStats(count, average);
 		place.changeTopHashtags(top1, top2);
+	}
+
+	/**
+	 * 리뷰 이미지로 장소의 firstImage 필드를 대체합니다.
+	 * @param placeId 장소 Id
+	 */
+	@Transactional
+	public void updateFirstImageIfNeeded(Long placeId) {
+		Place place = placeRepository.findById(placeId)
+				.orElseThrow(ErrorStatus.PLACE_NOT_FOUND::serviceException);
+
+		// 공식 이미지가 있으면 유지
+		if (StringUtils.hasText(place.getFirstImage()) && !place.isReviewImage()) {
+			return;
+		}
+
+		String url = pickImageFromReviews(placeId);
+
+		if (StringUtils.hasText(url) && !url.equals(place.getFirstImage())) {
+			place.updateFirstImageFromReview(url);
+		}
+
+	}
+
+	/**
+	 * 리뷰의 (평점순 -> 최신순) 이미지 url을 반환합니다.
+	 * @param placeId 장소 Id
+	 * @return 리뷰 이미지 url
+	 */
+	private String pickImageFromReviews(Long placeId) {
+		return reviewImageRepository
+				.findFirstByReview_Place_IdAndUrlIsNotNullAndReview_ScoreIsNotNullOrderByReview_ScoreDescReview_IdDesc(placeId)
+				.map(ReviewImage::getUrl)
+				.or(() -> reviewImageRepository
+						.findFirstByReview_Place_IdAndUrlIsNotNullOrderByReview_IdDesc(placeId)
+						.map(ReviewImage::getUrl))
+				.orElse(null);
 	}
 
 	/**
