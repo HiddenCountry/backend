@@ -105,6 +105,10 @@ public class Place {
 	@Enumerated(EnumType.STRING)
 	private Tag topHashtag2;
 
+	@NotNull
+	@Column(name = "is_review_image", nullable = true)
+	private boolean isReviewImage;
+
 	public void changeSeason(Season newSeason) {
 		if (newSeason == null) {
 			throw new IllegalArgumentException("추천 계절은 null일 수 없습니다.");
@@ -120,6 +124,11 @@ public class Place {
 	public void changeReviewStats(long count, float average) {
 		this.reviewCount = count;
 		this.reviewScoreAverage = average;
+	}
+
+	public void updateFirstImageFromReview(String firstImage) {
+		this.firstImage = firstImage;
+		this.isReviewImage = true;
 	}
 
 	public void addPlaceCountries(CountryRegion... regions) {
