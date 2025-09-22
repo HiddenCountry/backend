@@ -8,6 +8,7 @@ import com.example.hiddencountry.user.model.request.UpdateNicknameRequest;
 import com.example.hiddencountry.user.model.response.AuthorizationToken;
 import com.example.hiddencountry.user.model.response.KakaoTokenResponseDto;
 import com.example.hiddencountry.user.model.response.KakaoUserInfoResponseDto;
+import com.example.hiddencountry.user.model.response.UserInfoResponseDto;
 import com.example.hiddencountry.user.repository.UserRepository;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import lombok.RequiredArgsConstructor;

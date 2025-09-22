@@ -7,6 +7,7 @@ import com.example.hiddencountry.user.domain.User;
 import com.example.hiddencountry.user.model.request.UpdateNicknameRequest;
 import com.example.hiddencountry.user.model.response.AuthorizationToken;
 import com.example.hiddencountry.user.model.response.KakaoUserInfoResponseDto;
+import com.example.hiddencountry.user.model.response.UserInfoResponseDto;
 import com.example.hiddencountry.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -48,6 +49,17 @@ public class KakaoLoginController {
         return ApiResponse.onSuccess(
                 SuccessStatus.UPDATE_NICKNAME_SUCCESS,
                 userService.updateNickname(user, updateNicknameRequest));
+    }
+
+    @Operation(
+            summary = "회원 정보 조회",
+            description = ""
+    )
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping("/user-info")
+    public ApiResponse<UserInfoResponseDto> getUserInfo(
+            @Parameter(hidden = true) @HiddenCountryUser User user) {
+        return ApiResponse.onSuccess(SuccessStatus.OK,UserInfoResponseDto.from(user));
     }
 
     @GetMapping("/test")
