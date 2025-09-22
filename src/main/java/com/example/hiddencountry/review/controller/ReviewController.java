@@ -2,9 +2,7 @@ package com.example.hiddencountry.review.controller;
 
 import com.example.hiddencountry.global.annotation.HiddenCountryUser;
 import com.example.hiddencountry.global.model.ApiResponse;
-import com.example.hiddencountry.global.pagination.PaginationModel;
 import com.example.hiddencountry.global.status.SuccessStatus;
-import com.example.hiddencountry.place.model.PlaceThumbnailModel;
 import com.example.hiddencountry.review.model.ReviewSort;
 import com.example.hiddencountry.review.model.request.ReviewRequest;
 import com.example.hiddencountry.review.model.response.MyPageReviewListResponse;
@@ -88,6 +86,20 @@ public class ReviewController {
         return ApiResponse.onSuccess(
                 SuccessStatus.OK,
                 reviewService.getReviews(placeId, sort, cursorId, cursorScore, size)
+        );
+    }
+
+    @Operation(
+            summary = "리뷰 이미지 조회 (최대 30개)",
+            description = "특정 장소의 리뷰 이미지들을 반환합니다."
+    )
+    @GetMapping("/{placeId}/images")
+    public ApiResponse<List<String>> getReviewImages(
+            @PathVariable("placeId") Long placeId
+    ) {
+        return ApiResponse.onSuccess(
+                SuccessStatus.OK,
+                reviewService.getReviewImages(placeId)
         );
     }
 

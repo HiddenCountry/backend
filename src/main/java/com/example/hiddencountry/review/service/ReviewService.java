@@ -206,4 +206,23 @@ public class ReviewService {
 
 		return new MyPageReviewListResponse(items, total, resultPage.hasNext(), page, size);
 	}
+
+	/**
+	 * 리뷰의 이미지 url들을 반환합니다. (최대 30개)
+	 * @param placeId
+	 * @return 장소 Id
+	 */
+	@Transactional
+	public List<String> getReviewImages(Long placeId) {
+		placeRepository.findById(placeId)
+				.orElseThrow(ErrorStatus.PLACE_NOT_FOUND::serviceException);
+
+		// 최대 30개
+		return reviewImageRepository
+				.findTop30ByReview_Place_IdAndUrlIsNotNullAndReview_ScoreIsNotNullOrderByReview_ScoreDescReview_IdDescIdDesc(placeId)
+				.stream()
+				.map(ReviewImage::getUrl)
+				.filter(url -> url != null && !url.isBlank()) // 빈 문자열 방지
+				.toList();
+	}
 }
