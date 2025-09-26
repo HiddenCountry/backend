@@ -88,6 +88,11 @@ public class UserService {
     public AuthorizationToken generateTokenAfterKakaoAuth(KakaoUserInfoResponseDto userInfo) {
         Long kakaoId = userInfo.getId();
 
+        String newProfileUrl = null;
+        if (userInfo.getKakaoAccount().getProfile() != null) {
+            newProfileUrl = userInfo.getKakaoAccount().getProfile().getProfileImageUrl();
+        }
+
         // 카카오 ID로 기존 유저 조회
         User user = userRepository.findByKakaoId(kakaoId)
                 .orElseGet(() -> {
@@ -95,6 +100,12 @@ public class UserService {
                     User newUser = UserConverter.userOf(userInfo);
                     return userRepository.save(newUser);
                 });
+
+        if (newProfileUrl != null
+                && !newProfileUrl.isBlank()
+                && !newProfileUrl.equals(user.getProfileImage())) {
+            user.updateProfileImage(newProfileUrl);
+        }
 
         return jwtTokenProvider.createTokenInfo(user);
     }
