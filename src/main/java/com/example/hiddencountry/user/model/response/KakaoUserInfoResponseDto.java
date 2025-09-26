@@ -80,11 +80,11 @@ public class KakaoUserInfoResponseDto {
 //            public String nickName;
 
             //프로필 미리보기 이미지 URL
-            @JsonProperty("thumbnail_image")
+            @JsonProperty("thumbnail_image_url")
             public String thumbnailImageUrl;
 
             //프로필 사진 URL
-            @JsonProperty("profile_image")
+            @JsonProperty("profile_image_url")
             public String profileImageUrl;
 
             //프로필 사진 URL 기본 프로필인지 여부
