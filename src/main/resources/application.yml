@@ -15,6 +15,21 @@ spring:
           auto: update
         default_batch_fetch_size: 1000
         open-in-view: false
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: gpt-4o-mini
+      embedding:
+        options:
+          model: text-embedding-3-large
+    vectorstore:
+      pinecone:
+        api-key: ${PINECONE_API_KEY}
+        index-name: ${PINECONE_INDEX}
+        namespace: ${PINECONE_NAMESPACE}
+        content-field-name: document_content
 
 jwt:
   secret: ${JWT_SECRET}
