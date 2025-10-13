@@ -35,7 +35,8 @@ public enum ErrorStatus {
 
     // S3 Error
     FILE_IO_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "IO500", "파일 입출력 중 오류가 발생했습니다."),
-    S3_UPLOAD_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "S3500","S3 업로드 중 오류가 발생했습니다.");
+    S3_UPLOAD_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "S3500","S3 업로드 중 오류가 발생했습니다."),
+    RETRIEVE_NOT_FOUND(HttpStatus.NOT_FOUND, "RETRIEVE_NOT_FOUND", "관련 정보를 찾을 수 없습니다. 다른 질문을 시도하거나 관련 문서를 업로드해 주세요.");
 
     private final HttpStatus httpStatus;
     private final String code;
