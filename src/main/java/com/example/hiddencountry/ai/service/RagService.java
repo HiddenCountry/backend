@@ -59,10 +59,12 @@ public class RagService {
                         "사용자의 질문에 대한 답변을 다음 정보를 바탕으로 생성해주세요.\n" +
                         "주어진 정보에 답이 없다면 모른다고 솔직히 말해주세요.\n" +
                         "사용자가 말한 지역과 장소의 address와 시·군·구 행정구역이 일치할 때만 추천하세요.\n\n" +
+                        "사용자에게 질문으로 답변을 끝내지 말고 무조건 평서문으로 답을 하세요." +
                         "정보:\n" + context;
 
             ChatResponse response = chatService.openAiChat(question, systemPromptText, "gpt-3.5-turbo");
             log.debug("AI 응답 생성: {}", response);
+            String text = response.getResult().getOutput().getText();
 //
 //            // 참고 문서 정보 추가
 //            StringBuilder sourceInfo = new StringBuilder();
@@ -75,6 +77,6 @@ public class RagService {
 //            }
 
 //            return QueryResponseDto.from(question,response.toString() + sourceInfo, relevantDocs);
-            return QueryResponse.from(question,response.toString(), relevantDocs);
+            return QueryResponse.from(question,text, relevantDocs);
     }
 }
