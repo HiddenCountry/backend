@@ -59,4 +59,17 @@ public class TravelCourseController {
 		);
 	}
 
+	@GetMapping("/mine")
+	public ApiResponse<List<TravelCourseModel>> getMyTravelCourses(
+		@Parameter(hidden = true) @HiddenCountryUser User user
+	) {
+		List<TravelCourseModel> myCourses = travelCourseService.getMyTravelCourses(user);
+		return ApiResponse.onSuccess(
+			SuccessStatus.OK,
+			myCourses
+		);
+	}
+
+
+
 }

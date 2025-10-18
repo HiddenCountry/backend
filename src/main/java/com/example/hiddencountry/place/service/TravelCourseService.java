@@ -89,4 +89,16 @@ public class TravelCourseService {
 			places
 		);
 	}
+
+	@Transactional(readOnly = true)
+	public List<TravelCourseModel> getMyTravelCourses(User user) {
+		List<TravelCourse> courses = travelCourseRepository.findByUser(user);
+		return courses.stream()
+			.map(course -> new TravelCourseModel(
+				course.getId(),
+				course.getName(),
+				course.getFirstImage()
+			))
+			.toList();
+	}
 }
