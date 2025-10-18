@@ -12,4 +12,5 @@ import com.example.hiddencountry.user.domain.User;
 @Repository
 public interface TravelCourseRepository extends JpaRepository<TravelCourse, Long> {
 	List<TravelCourse> findByUser(User user);
+	List<TravelCourse> findAllByOrderByViewCountDesc();
 }

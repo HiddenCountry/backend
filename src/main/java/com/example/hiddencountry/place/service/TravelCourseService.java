@@ -56,7 +56,7 @@ public class TravelCourseService {
 	}
 
 	public List<TravelCourseModel> getAllTravelCourses() {
-		List<TravelCourse> courses = travelCourseRepository.findAll();
+		List<TravelCourse> courses = travelCourseRepository.findAllByOrderByViewCountDesc();
 		return courses.stream()
 			.map(course -> new TravelCourseModel(
 				course.getId(),
