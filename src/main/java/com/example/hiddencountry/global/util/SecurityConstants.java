@@ -22,6 +22,7 @@ public class SecurityConstants {
     public static final List<String> GET__METHOD_ALLOW_URLS = List.of(
         "/places",
         "/places/map",
-        "/place"
+        "/place",
+        "/travel-courses"
     );
 }
