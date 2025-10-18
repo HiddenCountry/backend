@@ -46,6 +46,9 @@ public class TravelCourse extends BaseEntity {
 	@Column(name = "first_image", nullable = true, length = 500)
 	private String firstImage;
 
+	@Column(name = "view_count", nullable = false)
+	private long viewCount = 0; // 기본값 0
+
 	@OneToMany(mappedBy = "travelCourse", cascade = CascadeType.ALL, orphanRemoval = true)
 	@OrderBy("orderIndex ASC")
 	@Builder.Default
