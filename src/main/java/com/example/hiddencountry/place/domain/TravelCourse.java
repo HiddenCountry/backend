@@ -43,7 +43,7 @@ public class TravelCourse extends BaseEntity {
 	@NotNull
 	private User user;
 
-	@Column(name = "first_image", nullable = false, length = 500)
+	@Column(name = "first_image", nullable = true, length = 500)
 	private String firstImage;
 
 	@OneToMany(mappedBy = "travelCourse", cascade = CascadeType.ALL, orphanRemoval = true)

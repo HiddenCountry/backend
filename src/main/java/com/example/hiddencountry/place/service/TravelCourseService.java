@@ -7,9 +7,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.hiddencountry.global.status.ErrorStatus;
 import com.example.hiddencountry.place.domain.Place;
 import com.example.hiddencountry.place.domain.TravelCourse;
+import com.example.hiddencountry.place.model.PlaceThumbnailModel;
 import com.example.hiddencountry.place.model.TravelCourseCreateRequest;
+import com.example.hiddencountry.place.model.TravelCourseDetailModel;
 import com.example.hiddencountry.place.model.TravelCourseModel;
 import com.example.hiddencountry.place.repository.PlaceRepository;
 import com.example.hiddencountry.place.repository.TravelCourseRepository;
@@ -61,5 +64,29 @@ public class TravelCourseService {
 				course.getFirstImage()
 			))
 			.toList();
+	}
+
+	public TravelCourseDetailModel getTravelCourseDetail(Long courseId, User user) {
+		TravelCourse course = travelCourseRepository.findById(courseId)
+			.orElseThrow(ErrorStatus.PLACE_COURSE_NOT_FOUND::serviceException);
+
+		// // 유저 좌표 가져오기 (옵션)
+		// Double userLatitude = userLocationService.getLatitude(userId);
+		// Double userLongitude = userLocationService.getLongitude(userId);
+
+		List<PlaceThumbnailModel> places = course.getTravelCoursePlaces().stream()
+			.map(tp -> {
+				Place place = tp.getPlace();
+				Boolean isBookmarked = commonPlaceService.isBookmarked(user, place);
+				return PlaceThumbnailModel.toPlaceThumbnailModel(place, isBookmarked, null,null);
+			})
+			.toList();
+
+		return new TravelCourseDetailModel(
+			course.getId(),
+			course.getName(),
+			course.getFirstImage(),
+			places
+		);
 	}
 }

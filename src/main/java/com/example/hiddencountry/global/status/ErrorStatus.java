@@ -33,6 +33,9 @@ public enum ErrorStatus {
     // Place Error
     PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "PLACE_NOT_FOUND","Place not found"),
 
+    // Course Error
+    PLACE_COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "PLACE_COURSE_NOT_FOUND","Place not found"),
+
     // S3 Error
     FILE_IO_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "IO500", "파일 입출력 중 오류가 발생했습니다."),
     S3_UPLOAD_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "S3500","S3 업로드 중 오류가 발생했습니다."),

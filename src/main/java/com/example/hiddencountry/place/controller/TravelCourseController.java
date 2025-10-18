@@ -3,6 +3,7 @@ package com.example.hiddencountry.place.controller;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +13,7 @@ import com.example.hiddencountry.global.annotation.HiddenCountryUser;
 import com.example.hiddencountry.global.model.ApiResponse;
 import com.example.hiddencountry.global.status.SuccessStatus;
 import com.example.hiddencountry.place.model.TravelCourseCreateRequest;
+import com.example.hiddencountry.place.model.TravelCourseDetailModel;
 import com.example.hiddencountry.place.model.TravelCourseModel;
 import com.example.hiddencountry.place.service.TravelCourseService;
 import com.example.hiddencountry.user.domain.User;
@@ -41,6 +43,19 @@ public class TravelCourseController {
 		return ApiResponse.onSuccess(
 			SuccessStatus.OK,
 			courses
+		);
+	}
+
+
+	@GetMapping("/{id}")
+	public ApiResponse<TravelCourseDetailModel> getTravelCourseDetail(
+		@PathVariable Long id,
+		@Parameter(hidden = true) @HiddenCountryUser User user
+	) {
+		TravelCourseDetailModel response = travelCourseService.getTravelCourseDetail(id, user);
+		return ApiResponse.onSuccess(
+			SuccessStatus.OK,
+			response
 		);
 	}
 

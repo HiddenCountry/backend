@@ -23,6 +23,6 @@ public class SecurityConstants {
         "/places",
         "/places/map",
         "/place",
-        "/travel-courses"
+        "/travel-courses/**"
     );
 }
