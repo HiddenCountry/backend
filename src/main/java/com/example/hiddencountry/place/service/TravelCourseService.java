@@ -101,4 +101,17 @@ public class TravelCourseService {
 			))
 			.toList();
 	}
+
+	@Transactional
+	public void deleteTravelCourse(Long courseId, User user) {
+		TravelCourse course = travelCourseRepository.findById(courseId)
+			.orElseThrow(ErrorStatus.PLACE_COURSE_NOT_FOUND::serviceException);
+
+		// 본인 여부 체크
+		if (!course.getUser().getId().equals(user.getId())) {
+			throw ErrorStatus.PLACE_COURSE_DELETE_FORBIDDEN.serviceException();
+		}
+
+		travelCourseRepository.delete(course);
+	}
 }

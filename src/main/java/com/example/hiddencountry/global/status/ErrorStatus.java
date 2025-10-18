@@ -35,6 +35,8 @@ public enum ErrorStatus {
 
     // Course Error
     PLACE_COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "PLACE_COURSE_NOT_FOUND","Place not found"),
+    PLACE_COURSE_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "COURSE_DELETE_FORBIDDEN", "본인이 생성한 코스만 삭제할 수 있습니다."),
+
 
     // S3 Error
     FILE_IO_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "IO500", "파일 입출력 중 오류가 발생했습니다."),
