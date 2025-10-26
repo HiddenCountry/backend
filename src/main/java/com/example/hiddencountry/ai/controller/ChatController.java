@@ -40,7 +40,20 @@ public class ChatController {
         List<Document> relevantDocs = ragService.retrieve(request.query());
         return ApiResponse.onSuccess(
                 SuccessStatus.OK,
-                ragService.generateAnswerWithContexts(request.query(), relevantDocs)
+                ragService.generateAnswerWithContexts(request.query(), relevantDocs, request.sessionId())
+        );
+    }
+
+    @Operation(
+            summary = "sessionId 발급",
+            description = "챗봇 채팅 메모리 기억에 필요한 sessionId를 발급하는 API입니다."
+    )
+    @GetMapping("/session")
+    public ApiResponse<String> create() {
+        String sessionId = java.util.UUID.randomUUID().toString();
+        return ApiResponse.onSuccess(
+                SuccessStatus.OK,
+                sessionId
         );
     }
 }

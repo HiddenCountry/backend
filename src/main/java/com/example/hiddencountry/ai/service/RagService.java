@@ -35,7 +35,15 @@ public class RagService {
         return results;
     }
 
-    public QueryResponse generateAnswerWithContexts(String question, List<Document> relevantDocs) {
+    /**
+     * rag 챗봇 기능을 수행합니다.
+     *
+     * @param question 질문
+     * @param relevantDocs rag 문서
+     * @param sessionId 세션 id
+     * @return 챗 응답 결과
+     */
+    public QueryResponse generateAnswerWithContexts(String question, List<Document> relevantDocs, String sessionId) {
 
         if (relevantDocs == null || relevantDocs.isEmpty()) {
             log.debug("관련 정보를 찾을 수 없음: '$question'");
@@ -57,12 +65,12 @@ public class RagService {
         String systemPromptText =
                 "당신은 여행 계획 설계를 돕는 Q&A 챗봇입니다.\n" +
                         "사용자의 질문에 대한 답변을 다음 정보를 바탕으로 생성해주세요.\n" +
-                        "주어진 정보에 답이 없다면 모른다고 솔직히 말해주세요.\n" +
+                        "주어진 정보에 답이 없다면 '제공할 수 있는 정보가 없습니다.'라고 솔직히 말해주세요.\n" +
                         "사용자가 말한 지역과 장소의 address와 시·군·구 행정구역이 일치할 때만 추천하세요.\n\n" +
                         "사용자에게 질문으로 답변을 끝내지 말고 무조건 평서문으로 답을 하세요." +
                         "정보:\n" + context;
 
-            ChatResponse response = chatService.openAiChat(question, systemPromptText, "gpt-4o-mini");
+            ChatResponse response = chatService.openAiChat(question, systemPromptText, "gpt-4o-mini", sessionId);
             log.debug("AI 응답 생성: {}", response);
             String text = response.getResult().getOutput().getText();
 //
