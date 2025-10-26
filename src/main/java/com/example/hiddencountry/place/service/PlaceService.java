@@ -57,7 +57,8 @@ public class PlaceService {
 			"getThumbnailsByFilterAndSort called with page={}, size={}, areaCode={}, contentType={}, season={}, countryRegion={}, sortType={}, latitude={}, longitude={}, title='{}'",
 			page, size, areaCode, contentType, season, countryRegion, sortType, userLatitude, userLongitude, title);
 		if (sortType != SortType.DISTANCE_ASC) {
-			Pageable pageable = PageRequest.of(page, size, Sort.by(sortType.getDirection(), sortType.getColumnName()));
+			Pageable pageable = PageRequest.of(page, size, Sort.by(sortType.getDirection(), sortType.getColumnName()) // 1순위 정렬
+					.and(Sort.by(Sort.Direction.ASC, "id"))); // 2순위 id 오름차순 정렬);
 
 			Page<Place> placePage = (title == null || !title.isBlank()) ?
 				placeRepository.searchAndNotDistance(areaCode, title, contentType, season, countryRegion, pageable) :
