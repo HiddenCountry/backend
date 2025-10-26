@@ -46,6 +46,10 @@ public class ChatController {
         );
     }
 
+    @Operation(
+            summary = "sessionId 발급",
+            description = "챗봇 채팅 메모리 기억에 필요한 sessionId를 발급하는 API입니다."
+    )
     @GetMapping("/session")
     public ApiResponse<String> create() {
         String sessionId = java.util.UUID.randomUUID().toString();
