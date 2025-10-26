@@ -1,6 +1,7 @@
 package com.example.hiddencountry.place.service;
 
 import java.util.List;
+import java.util.Objects;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -86,7 +87,8 @@ public class TravelCourseService {
 			course.getId(),
 			course.getName(),
 			course.getFirstImage(),
-			places
+			places,
+			user != null && course.getUser() != null && Objects.equals(user.getId(), course.getUser().getId())
 		);
 	}
 

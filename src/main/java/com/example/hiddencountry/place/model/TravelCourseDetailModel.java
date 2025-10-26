@@ -12,4 +12,5 @@ public class TravelCourseDetailModel {
 	private String title;
 	private String firstImage;
 	private List<PlaceThumbnailModel> places;
+	private Boolean isMine;
 }
