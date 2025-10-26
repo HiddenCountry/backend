@@ -16,7 +16,8 @@ public class SecurityConstants {
             "/swagger-ui.html",
             "/swagger-ui/**",
             "/v3/api-docs/**",
-            "/api/tour/**"
+            "/api/tour/**",
+            "/chat/query"
     );
 
     /// 토큰이 있을 경우 인증 절차 진행하지만, 없을 경우에도 예외를 발생시키지는 않는 GET 메서드 URL
@@ -24,6 +25,7 @@ public class SecurityConstants {
         "/places",
         "/places/map",
         "/place",
-        "/travel-courses/**"
+        "/travel-courses/**",
+        "/review/**"
     );
 }
