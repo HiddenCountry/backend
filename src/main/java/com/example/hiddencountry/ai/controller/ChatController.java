@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.document.Document;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,7 +24,6 @@ import java.util.List;
 public class ChatController {
 
     private final RagService ragService;
-    private final ChatMemory chatMemory;
 
     /**
      * 사용자 질의에 대해 관련 문서를 검색하고 RAG 기반 응답을 생성합니다.
