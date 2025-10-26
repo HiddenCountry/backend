@@ -64,7 +64,7 @@ public class ChatService {
      * @param conversationId 대화 세션 id
      * @return ChatResponse OpenAI 챗 응답
      */
-    public ChatResponse openAiChat(String userInput, String systemMessage, String model, String conversationId) {
+    public ChatResponse openAiChat(String userInput, String systemMessage, String model, String conversationId, String context) {
         log.debug("OpenAI 챗 호출(메모리) - model: {}, convId: {}", model, conversationId);
 
         List<Message> history = chatMemory.get(conversationId);
@@ -82,7 +82,7 @@ public class ChatService {
         String assistantText = response.getResult().getOutput().getText();
         chatMemory.add(conversationId, List.of(
                 new UserMessage(userInput),
-                new org.springframework.ai.chat.messages.AssistantMessage(assistantText)
+                new org.springframework.ai.chat.messages.AssistantMessage(assistantText + context)
         ));
         return response;
     }
