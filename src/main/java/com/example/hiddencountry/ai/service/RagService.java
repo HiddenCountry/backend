@@ -62,7 +62,7 @@ public class RagService {
                         "사용자에게 질문으로 답변을 끝내지 말고 무조건 평서문으로 답을 하세요." +
                         "정보:\n" + context;
 
-            ChatResponse response = chatService.openAiChat(question, systemPromptText, "gpt-3.5-turbo");
+            ChatResponse response = chatService.openAiChat(question, systemPromptText, "gpt-4o-mini");
             log.debug("AI 응답 생성: {}", response);
             String text = response.getResult().getOutput().getText();
 //
