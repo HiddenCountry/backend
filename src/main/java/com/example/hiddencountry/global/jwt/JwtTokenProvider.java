@@ -2,7 +2,6 @@ package com.example.hiddencountry.global.jwt;
 
 import com.example.hiddencountry.global.status.ErrorStatus;
 import com.example.hiddencountry.user.domain.User;
-import com.example.hiddencountry.user.model.response.AuthorizationToken;
 import com.example.hiddencountry.user.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -53,13 +52,6 @@ public class JwtTokenProvider {
                 .build();
     }
 
-    public AuthorizationToken createTokenInfo(User user) {
-        String refreshToken = createRefreshToken(user);
-        RefreshTokenHolder.setRefreshToken(refreshToken, user.getId());
-        boolean isFirstLogin = (user.getNickname().equals("hiddencountry-new-kakao-user"));
-        return new AuthorizationToken(createAccessToken(user), refreshToken, isFirstLogin);
-    }
-
     public String createAccessToken(User user) {
         return createToken(user, accessTokenValidityInSeconds, TOKEN_TYPE_ACCESS);
     }
@@ -95,6 +87,13 @@ public class JwtTokenProvider {
         return false;
     }
 
+    public Long parseRefreshToken(String token) {
+        var claims = jwtParser.parseSignedClaims(token)
+                .getPayload();
+        assertRefreshTokenType(claims);
+        return getUserId(claims);
+    }
+
     public Authentication getAuthentication(String token) {
         var claims = jwtParser.parseSignedClaims(token)
                 .getPayload();
@@ -127,6 +126,13 @@ public class JwtTokenProvider {
     private void assertAccessTokenType(Claims claims) {
         var tokenType = claims.get(CLAIM_TYP, String.class);
         if (!TOKEN_TYPE_ACCESS.equals(tokenType)) {
+            throw ErrorStatus.NOT_AUTHORIZED.serviceException();
+        }
+    }
+
+    private void assertRefreshTokenType(Claims claims) {
+        var tokenType = claims.get(CLAIM_TYP, String.class);
+        if (!TOKEN_TYPE_REFRESH.equals(tokenType)) {
             throw ErrorStatus.NOT_AUTHORIZED.serviceException();
         }
     }
