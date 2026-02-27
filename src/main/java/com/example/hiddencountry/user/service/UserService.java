@@ -1,11 +1,9 @@
 package com.example.hiddencountry.user.service;
 
-import com.example.hiddencountry.global.jwt.JwtTokenProvider;
 import com.example.hiddencountry.global.status.ErrorStatus;
 import com.example.hiddencountry.user.converter.UserConverter;
 import com.example.hiddencountry.user.domain.User;
 import com.example.hiddencountry.user.model.request.UpdateNicknameRequest;
-import com.example.hiddencountry.user.model.response.AuthorizationToken;
 import com.example.hiddencountry.user.model.response.KakaoTokenResponseDto;
 import com.example.hiddencountry.user.model.response.KakaoUserInfoResponseDto;
 import com.example.hiddencountry.user.model.response.UserInfoResponseDto;
@@ -27,8 +25,6 @@ import reactor.core.publisher.Mono;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final JwtTokenProvider jwtTokenProvider;
-
     @Value("${kakao.client_id}")
     private String clientId;
 
@@ -85,7 +81,14 @@ public class UserService {
     }
 
     @Transactional
-    public AuthorizationToken generateTokenAfterKakaoAuth(KakaoUserInfoResponseDto userInfo) {
+    public User kakaoLoginUser(String code) {
+        String accessToken = getAccessTokenFromKakao(code);
+        KakaoUserInfoResponseDto userInfo = getUserInfo(accessToken);
+        return generateUserAfterKakaoAuth(userInfo);
+    }
+
+    @Transactional
+    public User generateUserAfterKakaoAuth(KakaoUserInfoResponseDto userInfo) {
         Long kakaoId = userInfo.getId();
 
         String newProfileUrl = null;
@@ -95,6 +98,7 @@ public class UserService {
 
         // 카카오 ID로 기존 유저 조회
         User user = userRepository.findByKakaoId(kakaoId)
+
                 .orElseGet(() -> {
                     // 없으면 회원가입
                     User newUser = UserConverter.userOf(userInfo);
@@ -107,7 +111,7 @@ public class UserService {
             user.updateProfileImage(newProfileUrl);
         }
 
-        return jwtTokenProvider.createTokenInfo(user);
+        return user;
     }
 
     @Transactional
