@@ -9,7 +9,6 @@ public class AuthCookieFactory {
     private static final String COOKIE_NAME = "refresh_token";
     private static final String COOKIE_PATH = "/auth";
     private static final String SAME_SITE = "None";
-    private static final String SAME_SITE = "None";
     private static final boolean HTTP_ONLY = true;
     private static final boolean SECURE = true;
 
