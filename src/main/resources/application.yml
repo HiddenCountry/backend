@@ -1,9 +1,4 @@
 spring:
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
   jpa:
     properties:
       hibernate:
@@ -30,6 +25,12 @@ spring:
         index-name: ${PINECONE_INDEX}
         namespace: ${PINECONE_NAMESPACE}
         content-field-name: document_content
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.orm.jdbc.bind: trace
+    com.zaxxer.hikari: debug
 
 jwt:
   secret: ${JWT_SECRET}
