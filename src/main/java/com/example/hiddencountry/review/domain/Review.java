@@ -60,6 +60,7 @@ public class Review extends BaseEntity {
 
 	@Builder.Default
 	@OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+	@Fetch(FetchMode.SUBSELECT)
 	private List<ReviewImage> images = new ArrayList<>();
 
 	@Builder.Default
