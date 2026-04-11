@@ -9,7 +9,6 @@ import com.example.hiddencountry.place.repository.PlaceRepository;
 import com.example.hiddencountry.review.converter.ReviewConverter;
 import com.example.hiddencountry.review.domain.Review;
 import com.example.hiddencountry.review.domain.ReviewImage;
-import com.example.hiddencountry.review.domain.ReviewTag;
 import com.example.hiddencountry.review.domain.type.Tag;
 import com.example.hiddencountry.review.model.ReviewSort;
 import com.example.hiddencountry.review.model.request.ReviewRequest;
@@ -20,7 +19,6 @@ import com.example.hiddencountry.review.model.response.ReviewResponse;
 import com.example.hiddencountry.review.repository.ReviewImageRepository;
 import com.example.hiddencountry.review.repository.ReviewTagRepository;
 import com.example.hiddencountry.user.domain.User;
-import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.*;
@@ -30,11 +28,15 @@ import com.example.hiddencountry.review.repository.ReviewRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.springframework.data.domain.Sort.Direction.DESC;
 
@@ -93,6 +95,7 @@ public class ReviewService {
 	 * @param size 페이지 크기
 	 * @return 리뷰 목록 DTO
 	 */
+    @Transactional(readOnly = true)
     public ReviewListResponse getReviews(Long placeId, ReviewSort sort,
 										 Long cursorId, Integer cursorScore, int size) {
 		Slice<Review> slice;
@@ -105,13 +108,35 @@ public class ReviewService {
 
 		} else { // RATING_DESC
 			Pageable p = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "score", "id"));
-			slice = (cursorScore == null || cursorId == null)
-					? reviewRepository.findByPlace_IdOrderByScoreDescIdDesc(placeId, p)
-					: reviewRepository.findTopRatedAfter(placeId, cursorScore, cursorId, p);
+			if (cursorScore == null || cursorId == null) {
+				slice = reviewRepository.findByPlace_IdOrderByScoreDescIdDesc(placeId, p);
+			} else {
+				// OR 조건을 두 branch로 분리해 각각 인덱스를 완전히 활용
+				// branch2: score = cursor → id DESC (높은 score 우선이므로 결과 앞부분)
+				// branch1: score < cursor → score DESC, id DESC (낮은 score는 결과 뒷부분)
+				Pageable limit = PageRequest.of(0, size + 1);
+				List<Review> branch2 = reviewRepository.findByScoreEqualAndIdLessThan(placeId, cursorScore, cursorId, limit);
+				List<Review> branch1 = reviewRepository.findByScoreLessThan(placeId, cursorScore, limit);
+
+				List<Review> merged = new ArrayList<>(branch2);
+				merged.addAll(branch1);
+
+				boolean hasNext = merged.size() > size;
+				List<Review> content = merged.subList(0, Math.min(size, merged.size()));
+				slice = new SliceImpl<>(content, p, hasNext);
+			}
 		}
 
-		var results = slice.getContent().stream()
-				.map(ReviewResponse::from)
+		List<Review> reviews = slice.getContent();
+		Map<Long, List<String>> imageUrlsByReviewId = getImageUrlsByReviewId(reviews);
+		Map<Long, List<Tag>> tagsByReviewId = getTagsByReviewId(reviews);
+
+		var results = reviews.stream()
+				.map(review -> ReviewResponse.from(
+						review,
+						imageUrlsByReviewId.getOrDefault(review.getId(), List.of()),
+						tagsByReviewId.getOrDefault(review.getId(), List.of())
+				))
 				.toList();
 
 		Long nextId = null;
@@ -129,6 +154,34 @@ public class ReviewService {
 				.nextScore(nextScore)
 				.build();
     }
+
+	private Map<Long, List<String>> getImageUrlsByReviewId(List<Review> reviews) {
+		if (reviews.isEmpty()) {
+			return Map.of();
+		}
+
+		Map<Long, List<String>> imageUrlsByReviewId = new LinkedHashMap<>();
+		List<Long> reviewIds = reviews.stream().map(Review::getId).toList();
+		reviewImageRepository.findImageViewsByReviewIdIn(reviewIds)
+				.forEach(image -> imageUrlsByReviewId
+						.computeIfAbsent(image.getReviewId(), ignored -> new ArrayList<>())
+						.add(image.getUrl()));
+		return imageUrlsByReviewId;
+	}
+
+	private Map<Long, List<Tag>> getTagsByReviewId(List<Review> reviews) {
+		if (reviews.isEmpty()) {
+			return Map.of();
+		}
+
+		Map<Long, List<Tag>> tagsByReviewId = new LinkedHashMap<>();
+		List<Long> reviewIds = reviews.stream().map(Review::getId).toList();
+		reviewTagRepository.findTagViewsByReviewIdIn(reviewIds)
+				.forEach(tag -> tagsByReviewId
+						.computeIfAbsent(tag.getReviewId(), ignored -> new ArrayList<>())
+						.add(tag.getTag()));
+		return tagsByReviewId;
+	}
 
 	/**
 	 * 해당 장소의 리뷰 개수, 평점 평균, top 해시태그(2개)를 Place 엔티티에 반영합니다
@@ -193,6 +246,7 @@ public class ReviewService {
 	 * @param size 한 페이지 크기
 	 * @return 페이징된 리뷰 목록, 작성한 전체 리뷰 개수, 다음 페이지 존재 여부, 페이지 인덱스, 페이지 크기
 	 */
+	@Transactional(readOnly = true)
 	public MyPageReviewListResponse getUserReviews(User user, @NotNull Integer page, @NotNull Integer size) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
 
@@ -212,7 +266,7 @@ public class ReviewService {
 	 * @param placeId
 	 * @return 장소 Id
 	 */
-	@Transactional
+	@Transactional(readOnly = true)
 	public List<String> getReviewImages(Long placeId) {
 		placeRepository.findById(placeId)
 				.orElseThrow(ErrorStatus.PLACE_NOT_FOUND::serviceException);

@@ -2,11 +2,11 @@ package com.example.hiddencountry.review.repository;
 
 import com.example.hiddencountry.review.domain.ReviewImage;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.zip.ZipFile;
 
 @Repository
 public interface ReviewImageRepository extends JpaRepository<ReviewImage, Long> {
@@ -16,4 +16,19 @@ public interface ReviewImageRepository extends JpaRepository<ReviewImage, Long> 
     // 최신순(평점 무관) + 이미지 있는 것 → id desc
     Optional<ReviewImage> findFirstByReview_Place_IdAndUrlIsNotNullOrderByReview_IdDesc(Long placeId);
 
-    List<ReviewImage> findTop30ByReview_Place_IdAndUrlIsNotNullAndReview_ScoreIsNotNullOrderByReview_ScoreDescReview_IdDescIdDesc(Long placeId);}
+    List<ReviewImage> findTop30ByReview_Place_IdAndUrlIsNotNullAndReview_ScoreIsNotNullOrderByReview_ScoreDescReview_IdDescIdDesc(Long placeId);
+
+    @Query("""
+        select ri.review.id as reviewId, ri.url as url
+        from ReviewImage ri
+        where ri.review.id in :reviewIds
+          and ri.url is not null
+        order by ri.review.id asc, ri.id asc
+    """)
+    List<ReviewImageView> findImageViewsByReviewIdIn(List<Long> reviewIds);
+
+    interface ReviewImageView {
+        Long getReviewId();
+        String getUrl();
+    }
+}
