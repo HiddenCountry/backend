@@ -21,6 +21,14 @@ public record ReviewResponse(
         LocalDateTime updatedAt
 ) {
     public static ReviewResponse from(Review review) {
+        return from(
+                review,
+                review.getImages().stream().map(ReviewImage::getUrl).toList(),
+                review.getTags().stream().map(ReviewTag::getTag).toList()
+        );
+    }
+
+    public static ReviewResponse from(Review review, List<String> imageUrls, List<Tag> tags) {
         return new ReviewResponse(
                 review.getId(),
                 review.getPlace().getId(),
@@ -28,8 +36,8 @@ public record ReviewResponse(
                 review.getUser().getNickname(),
                 review.getContent(),
                 review.getScore(),
-                review.getImages().stream().map(ReviewImage::getUrl).toList(),
-                review.getTags().stream().map(ReviewTag::getTag).toList(),
+                imageUrls,
+                tags,
                 review.getCreatedAt(),
                 review.getUpdatedAt()
         );

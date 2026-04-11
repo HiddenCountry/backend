@@ -11,30 +11,47 @@ import org.springframework.stereotype.Repository;
 
 import com.example.hiddencountry.review.domain.Review;
 
+import java.util.List;
+
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     // 최신순(id DESC): 첫 페이지
-    @EntityGraph(attributePaths = {"images"})
+    @EntityGraph(attributePaths = {"user", "place"})
     Slice<Review> findByPlace_IdOrderByIdDesc(Long placeId, Pageable pageable);
 
     // 최신순(id DESC): 다음 페이지
-    @EntityGraph(attributePaths = {"images"})
+    @EntityGraph(attributePaths = {"user", "place"})
     Slice<Review> findByPlace_IdAndIdLessThanOrderByIdDesc(Long placeId, Long id, Pageable pageable);
 
     // 평점순(score DESC, id DESC): 첫 페이지
-    @EntityGraph(attributePaths = {"images"})
+    @EntityGraph(attributePaths = {"user", "place"})
     Slice<Review> findByPlace_IdOrderByScoreDescIdDesc(Long placeId, Pageable pageable);
 
-    // 평점순: 커서 이후 (score,id)
-    @EntityGraph(attributePaths = {"images"})
+    // 평점순 커서: score < cursorScore  (branch 1)
+    @EntityGraph(attributePaths = {"user", "place"})
     @Query("""
         select r from Review r
         where r.place.id = :placeId
-          and (r.score < :score or (r.score = :score and r.id < :id))
+          and r.score < :score
         order by r.score desc, r.id desc
     """)
-    Slice<Review> findTopRatedAfter(
+    List<Review> findByScoreLessThan(
+            @Param("placeId") Long placeId,
+            @Param("score") Integer score,
+            Pageable pageable
+    );
+
+    // 평점순 커서: score = cursorScore AND id < cursorId  (branch 2)
+    @EntityGraph(attributePaths = {"user", "place"})
+    @Query("""
+        select r from Review r
+        where r.place.id = :placeId
+          and r.score = :score
+          and r.id < :id
+        order by r.id desc
+    """)
+    List<Review> findByScoreEqualAndIdLessThan(
             @Param("placeId") Long placeId,
             @Param("score") Integer score,
             @Param("id") Long id,
@@ -50,5 +67,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     long countByPlace_Id(Long placeId);
 
+    @EntityGraph(attributePaths = {"place"})
     Page<Review> findByUser_IdOrderByIdDesc(Long id, Pageable pageable);
 }

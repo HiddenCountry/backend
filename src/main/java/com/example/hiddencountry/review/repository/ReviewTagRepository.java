@@ -19,4 +19,17 @@ public interface ReviewTagRepository extends JpaRepository<ReviewTag, Long> {
         order by count(t.id) desc
     """)
     List<Tag> findTopTagValuesByPlace(@Param("placeId") Long placeId, Pageable pageable);
+
+    @Query("""
+        select rt.review.id as reviewId, rt.tag as tag
+        from ReviewTag rt
+        where rt.review.id in :reviewIds
+        order by rt.review.id asc, rt.id asc
+    """)
+    List<ReviewTagView> findTagViewsByReviewIdIn(@Param("reviewIds") List<Long> reviewIds);
+
+    interface ReviewTagView {
+        Long getReviewId();
+        Tag getTag();
+    }
 }
