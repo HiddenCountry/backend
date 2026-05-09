@@ -1,6 +1,8 @@
 package com.example.hiddencountry.global.storage;
 
+import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.Date;
 import java.util.UUID;
 
 @Component
@@ -32,6 +35,19 @@ public class S3Uploader {
             amazonS3.putObject(new PutObjectRequest(bucketName, key, in, md));
         }
         return amazonS3.getUrl(bucketName, key).toString();
+    }
+
+    public PresignedUrlResult generatePresignedUrl(String dir) {
+        String key = dir + "/" + UUID.randomUUID();
+        Date expiration = new Date(System.currentTimeMillis() + 10 * 60 * 1000L);
+
+        GeneratePresignedUrlRequest req = new GeneratePresignedUrlRequest(bucketName, key)
+                .withMethod(HttpMethod.PUT)
+                .withExpiration(expiration);
+
+        String presignedUrl = amazonS3.generatePresignedUrl(req).toString();
+        String s3Url = amazonS3.getUrl(bucketName, key).toString();
+        return PresignedUrlResult.from(presignedUrl, s3Url);
     }
 
     public void delete(String imageUrl) {
