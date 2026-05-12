@@ -78,7 +78,7 @@ public class ReviewService {
 	 */
 	@Transactional
 	public ReviewResponse createReview(User user, Long placeId, @Valid ReviewRequest request) {
-		Place place = placeRepository.findById(placeId)
+		Place place = placeRepository.findByIdForUpdate(placeId)
 				.orElseThrow(ErrorStatus.PLACE_NOT_FOUND::serviceException);
 
 		Review review = ReviewConverter.reviewOf(user, place, request);

@@ -2,12 +2,16 @@ package com.example.hiddencountry.place.repository;
 
 import java.util.List;
 
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
 
 import com.example.hiddencountry.place.domain.Place;
 import com.example.hiddencountry.place.domain.type.AreaCode;
@@ -19,6 +23,10 @@ import com.example.hiddencountry.place.model.PlaceDistanceModel;
 
 @Repository
 public interface PlaceRepository extends JpaRepository<Place, Long> {
+
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("SELECT p FROM Place p WHERE p.id = :id")
+	Optional<Place> findByIdForUpdate(@Param("id") Long id);
 
 	// @Query("""
 	// 	SELECT p
