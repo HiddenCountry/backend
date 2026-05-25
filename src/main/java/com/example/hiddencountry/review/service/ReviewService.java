@@ -1,6 +1,7 @@
 package com.example.hiddencountry.review.service;
 
 import com.example.hiddencountry.global.status.ErrorStatus;
+import com.example.hiddencountry.global.storage.PresignedUrlResult;
 import com.example.hiddencountry.global.storage.S3Uploader;
 import com.example.hiddencountry.place.domain.Place;
 import com.example.hiddencountry.place.domain.UserPlace;
@@ -14,6 +15,7 @@ import com.example.hiddencountry.review.model.ReviewSort;
 import com.example.hiddencountry.review.model.request.ReviewRequest;
 import com.example.hiddencountry.review.model.response.MyPageReviewListResponse;
 import com.example.hiddencountry.review.model.response.MyPageReviewResponse;
+import com.example.hiddencountry.review.model.response.PresignedUrlResponse;
 import com.example.hiddencountry.review.model.response.ReviewListResponse;
 import com.example.hiddencountry.review.model.response.ReviewResponse;
 import com.example.hiddencountry.review.repository.ReviewImageRepository;
@@ -30,13 +32,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import static org.springframework.data.domain.Sort.Direction.DESC;
 
@@ -52,38 +53,47 @@ public class ReviewService {
 	private final S3Uploader s3Uploader;
 
 	/**
+	 *
+	 * @param placeId	리뷰 대상 장소 ID
+	 * @param count	업로드 할 이미지 개수
+	 * @return	PresignedUrl 및 s3Url(이미지 url)
+	 */
+	public List<PresignedUrlResponse> generatePresignedUrls(Long placeId, int count) {
+		placeRepository.findById(placeId)
+				.orElseThrow(ErrorStatus.PLACE_NOT_FOUND::serviceException);
+
+		String dir = "reviews/" + placeId;
+		return IntStream.range(0, count)
+				.mapToObj(i -> s3Uploader.generatePresignedUrl(dir))
+				.map(r -> PresignedUrlResponse.from(r.presignedUrl(), r.s3Url()))
+				.toList();
+	}
+
+	/**
 	 * 리뷰를 생성합니다
-	 * @param user    리뷰 작성자(인증 사용자)
-	 * @param placeId 리뷰 대상 장소 ID
-	 * @param request 리뷰 본문/점수/태그 등 입력 DTO
-	 * @param images  업로드할 이미지 파일 목록. 비어있으면 업로드를 생략합니다.
-	 * @return 생성된 리뷰의 응답 DTO
-	 * @throws IOException 이미지 업로드(S3) 과정에서 I/O 오류가 발생한 경우
+	 * @param user	리뷰 작성자(인증 사용자)
+	 * @param placeId	리뷰 대상 장소 ID
+	 * @param request	리뷰 본문/점수/태그 등 입력 DTO
+	 * @return	생성된 리뷰의 응답 DTO
 	 */
 	@Transactional
-	public ReviewResponse createReview(User user, Long placeId, @Valid ReviewRequest request, List<MultipartFile> images) throws IOException {
-
-		Place place = placeRepository.findById(placeId)
+	public ReviewResponse createReview(User user, Long placeId, @Valid ReviewRequest request) {
+		Place place = placeRepository.findByIdForUpdate(placeId)
 				.orElseThrow(ErrorStatus.PLACE_NOT_FOUND::serviceException);
 
 		Review review = ReviewConverter.reviewOf(user, place, request);
 
-		Review saved = reviewRepository.save(review);
-
-		if (images != null && !images.isEmpty()) {
-			String dir = "reviews/%d/%d".formatted(placeId, saved.getId());
-			for (MultipartFile file : images) {
-				String url = s3Uploader.upload(file, dir);
-				saved.getImages().add(
-						ReviewImage.builder().url(url).review(saved).build()
-				);
+		if (request.imageUrls() != null) {
+			for (String url : request.imageUrls()) {
+				review.getImages().add(ReviewImage.builder().url(url).review(review).build());
 			}
 		}
 
+		reviewRepository.save(review);
 		updateReviewStats(placeId);
 		updateFirstImageIfNeeded(placeId);
 
-		return ReviewResponse.from(saved);
+		return ReviewResponse.from(review);
 	}
 
 	/**

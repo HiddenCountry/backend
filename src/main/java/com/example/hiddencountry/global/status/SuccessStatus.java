@@ -19,6 +19,7 @@ public enum SuccessStatus{
   
     // 리뷰 관련 응답
     REVIEW_CREATE_SUCCESS(HttpStatus.CREATED, "REVIEW_CREATE_SUCCESS", "리뷰가 등록되었습니다."),
+    REVIEW_PRESIGNED_URL_SUCCESS(HttpStatus.OK, "REVIEW_PRESIGNED_URL_SUCCESS", "Presigned URL이 발급되었습니다."),
 
     TRAVEL_COURSE_POST_SUCCESS(HttpStatus.CREATED, "TRAVEL_COURSE_POST_SUCCESS", "코스 등록에 성공하였습니다."),
     TRAVEL_COURSE_DELETE_SUCCESS(HttpStatus.OK, "TRAVEL_COURSE_DELETE_SUCCESS", "코스 삭제에 성공하였습니다.");
