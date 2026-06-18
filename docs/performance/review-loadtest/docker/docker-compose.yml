@@ -1,0 +1,29 @@
+version: '3.9'
+services:
+  review-perf-mysql:
+    image: mysql:8.0
+    container_name: review-perf-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: hiddencountry_perf
+      MYSQL_USER: perf
+      MYSQL_PASSWORD: perf
+      TZ: Asia/Seoul
+    ports:
+      - "3307:3306"
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --max_connections=300
+      - --innodb_buffer_pool_size=512M
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - review_perf_mysql_data:/var/lib/mysql
+
+volumes:
+  review_perf_mysql_data:
